@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.tools/
+tmp/
+artifacts/direct/
+bin/
+*.exe
+coverage.out
