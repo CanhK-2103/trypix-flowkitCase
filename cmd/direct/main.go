@@ -1,247 +1,188 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
-	"log/slog"
+	"github.com/shopspring/decimal"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
-	"flowkit/internal/direct"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/config"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/domain"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/providers"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/telemetry"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/workflow"
 )
 
-type evidence struct {
-	ID           string               `json:"id"`
-	StartedAt    time.Time            `json:"started_at"`
-	FinishedAt   *time.Time           `json:"finished_at,omitempty"`
-	Input        string               `json:"input"`
-	LLMRequest   direct.LLMRequest    `json:"llm_request"`
-	LLMResponse  *direct.LLMResponse  `json:"llm_response,omitempty"`
-	ImageModel   string               `json:"image_model"`
-	ImageRequest *direct.ImageRequest `json:"image_request,omitempty"`
-	Queue        *direct.QueueHandle  `json:"queue,omitempty"`
-	QueueStatus  *direct.QueueStatus  `json:"queue_status,omitempty"`
-	ImageResult  *direct.ImageResult  `json:"image_result,omitempty"`
-	Error        string               `json:"error,omitempty"`
+func read(path string, v any) error {
+	b, e := os.ReadFile(path)
+	if e != nil {
+		return e
+	}
+	return domain.Decode(b, v)
 }
-
+func write(path string, v any) error {
+	if e := os.MkdirAll(filepath.Dir(path), 0700); e != nil {
+		return e
+	}
+	b := domain.JSON(v)
+	temp := path + ".tmp"
+	if e := os.WriteFile(temp, b, 0600); e != nil {
+		return e
+	}
+	return os.Rename(temp, path)
+}
 func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
-	if err := run(); err != nil {
-		message := redact(err.Error())
-		slog.Error(message, "run_id", "direct", "node_id", "setup_or_provider", "attempt", 1)
+	if err := execute(); err != nil {
+		telemetry.Logger("direct", "cli").Error("Direct experiment failed", "event", "direct.failed", "error", err.Error())
 		os.Exit(1)
 	}
 }
-
-func run() error {
-	input := flag.String("input", "Matte black ceramic coffee mug with a wooden handle", "Product description")
-	dryRun := flag.Bool("dry-run", false, "Print requests without calling providers")
-	resume := flag.String("resume", "", "Resume polling from an existing evidence.json; never resubmit")
+func execute() error {
+	input := flag.String("input", "Matte blue ceramic coffee mug with a wooden handle", "Product description")
+	evidence := flag.String("evidence", "evidence/local/direct.json", "Evidence/checkpoint file")
+	resume := flag.Bool("resume", false, "Resume a previously saved fal ticket without resubmission")
 	flag.Parse()
-	if err := loadEnv(".env"); err != nil {
-		return err
+	if e := config.LoadDotEnv(".env"); e != nil {
+		return e
 	}
-	llmModel, imageModel := os.Getenv("OPENROUTER_MODEL"), os.Getenv("FAL_MODEL")
-	if *resume == "" && (llmModel == "" || imageModel == "") {
-		return fmt.Errorf("set OPENROUTER_MODEL and FAL_MODEL in .env; models are never guessed")
+	cfg := config.Load()
+	if cfg.OpenRouterKey == "" || cfg.FalKey == "" {
+		return fmt.Errorf("OPENROUTER_API_KEY and FAL_KEY must be set locally in .env")
 	}
-	if *dryRun {
-		if *resume != "" {
-			return fmt.Errorf("choose -dry-run or -resume")
+	var llm, image domain.Model
+	var wf domain.Workflow
+	for p, v := range map[string]any{"examples/models/prompt-writer.json": &llm, "examples/models/flux-schnell.json": &image, "examples/workflows/product.json": &wf} {
+		if e := read(p, v); e != nil {
+			return e
 		}
-		return printJSON(map[string]any{"llm_request": direct.PromptRequest(llmModel, *input), "fal_model": imageModel, "fal_request": direct.ImagePayload("<OpenRouter response prompt>"), "network_calls": 0})
 	}
-	if os.Getenv("FAL_KEY") == "" || (*resume == "" && os.Getenv("OPENROUTER_API_KEY") == "") {
-		return fmt.Errorf("fill local .env keys FAL_KEY and OPENROUTER_API_KEY before a real run")
-	}
-	client := direct.New(os.Getenv("OPENROUTER_API_KEY"), os.Getenv("FAL_KEY"))
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	client := providers.New(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
 	defer cancel()
-	var record evidence
-	var path string
-	if *resume != "" {
-		path = *resume
-		payload, err := os.ReadFile(path)
-		if err != nil {
+	record := domain.Object{}
+	ticket := providers.Ticket{}
+	if _, err := os.Stat(*evidence); err == nil {
+		if !*resume {
+			return fmt.Errorf("evidence file already exists; use -resume to avoid duplicate paid generation")
+		}
+		if err := read(*evidence, &record); err != nil {
 			return err
 		}
-		if err := json.Unmarshal(payload, &record); err != nil {
-			return err
+		if record["phase"] == "complete" {
+			return fmt.Errorf("experiment already complete; no request sent")
 		}
-		if record.ImageResult != nil {
-			return fmt.Errorf("this experiment already has a result; no new call was sent")
-		}
-		if record.Queue == nil {
-			return fmt.Errorf("no persisted fal request to resume")
-		}
-		if record.LLMResponse == nil || record.ImageRequest == nil || record.ImageModel == "" {
-			return fmt.Errorf("incomplete experiment metadata; refusing to resume")
-		}
-		if err := client.ValidateHandle(*record.Queue); err != nil {
-			return err
-		}
-		record.Error = ""
-	} else {
-		record = evidence{ID: time.Now().UTC().Format("20060102T150405.000000000Z"), StartedAt: time.Now().UTC(), Input: *input, ImageModel: imageModel, LLMRequest: direct.PromptRequest(llmModel, *input)}
-		path = filepath.Join("artifacts", "direct", record.ID, "evidence.json")
-		if err := save(path, record); err != nil {
-			return err
-		}
-	}
-	logger := slog.With("run_id", record.ID, "attempt", 1)
-	// The final error is persisted without exposing the keys, including provider error bodies.
-	finishError := func(err error) error {
-		record.Error = redact(err.Error())
-		if saveErr := save(path, record); saveErr != nil {
-			return errors.Join(err, saveErr)
-		}
-		return err
-	}
-	if *resume == "" {
-		logger.Info("generating prompt", "node_id", "llm", "model", llmModel)
-		response, err := client.GeneratePrompt(ctx, record.LLMRequest)
-		record.LLMResponse = &response
-		if err != nil {
-			return finishError(err)
-		}
-		payload := direct.ImagePayload(strings.TrimSpace(response.Choices[0].Message.Content))
-		record.ImageRequest = &payload
-		if err := save(path, record); err != nil {
-			return err
-		}
-		logger.Info("submitting image request", "node_id", "image", "model", record.ImageModel)
-		handle, err := client.Submit(ctx, record.ImageModel, payload)
-		// Persist the ID even if a returned tracking URL is malformed.
-		if handle.RequestID != "" {
-			record.Queue = &handle
-		}
-		if err != nil {
-			return finishError(err)
-		}
-		if err := save(path, record); err != nil {
-			return err
-		}
-		logger.Info("image request persisted", "node_id", "image", "provider_request_id", handle.RequestID, "evidence", path)
-	}
-	for {
-		status, err := client.Status(ctx, *record.Queue)
-		record.QueueStatus = &status
-		if err != nil {
-			return finishError(err)
-		}
-		if err := save(path, record); err != nil {
-			return err
-		}
-		logger.Info("image queue status", "node_id", "image", "status", status.Status, "provider_request_id", record.Queue.RequestID)
-		if status.Status == "COMPLETED" {
-			break
-		}
-		timer := time.NewTimer(2 * time.Second)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return finishError(ctx.Err())
-		case <-timer.C:
-		}
-	}
-	result, err := client.Result(ctx, *record.Queue)
-	if err != nil {
-		return finishError(err)
-	}
-	record.ImageResult = &result
-	finishedAt := time.Now().UTC()
-	record.FinishedAt = &finishedAt
-	if err := save(path, record); err != nil {
-		return err
-	}
-	logger.Info("direct experiment completed", "node_id", "image", "model", record.ImageModel, "duration_ms", finishedAt.Sub(record.StartedAt).Milliseconds())
-	return printJSON(map[string]any{"evidence": path, "llm_model": record.LLMResponse.Model, "image_model": record.ImageModel, "prompt": record.ImageRequest.Prompt, "image_url": result.Images[0].URL, "provider_request_id": record.Queue.RequestID})
-}
-
-func printJSON(value any) error {
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(value)
-}
-
-func save(path string, record evidence) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		return err
-	}
-	payload, err := json.MarshalIndent(record, "", "  ")
-	if err != nil {
-		return err
-	}
-	// Redact defensively if a provider echoes a secret in a response.
-	payload = []byte(redact(string(payload)))
-	temporary, err := os.CreateTemp(filepath.Dir(path), ".evidence-*.tmp")
-	if err != nil {
-		return err
-	}
-	tempPath := temporary.Name()
-	defer os.Remove(tempPath)
-	if err := temporary.Chmod(0600); err != nil {
-		temporary.Close()
-		return err
-	}
-	if _, err := temporary.Write(payload); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tempPath, path)
-}
-
-func redact(value string) string {
-	for _, name := range []string{"OPENROUTER_API_KEY", "FAL_KEY"} {
-		if key := os.Getenv(name); key != "" {
-			value = strings.ReplaceAll(value, key, "[REDACTED]")
-		}
-	}
-	return value
-}
-
-func loadEnv(path string) error {
-	file, err := os.Open(path)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(strings.TrimPrefix(scanner.Text(), "\ufeff"))
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		key, value, ok := strings.Cut(line, "=")
+		ticketMap, ok := record["ticket"].(map[string]any)
 		if !ok {
-			return fmt.Errorf(".env expects KEY=value lines")
+			return fmt.Errorf("no durable fal ticket; submission outcome may be uncertain, do not retry blindly")
 		}
-		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
-		if len(value) >= 2 && ((value[0] == '"' && value[len(value)-1] == '"') || (value[0] == '\'' && value[len(value)-1] == '\'')) {
-			value = value[1 : len(value)-1]
+		if e := domain.Decode(domain.JSON(ticketMap), &ticket); e != nil {
+			return e
 		}
-		if _, exists := os.LookupEnv(key); !exists {
-			if err := os.Setenv(key, value); err != nil {
-				return err
+		var models []domain.Model
+		if e := domain.Decode(domain.JSON(record["models"]), &models); e != nil {
+			return e
+		}
+		for _, snapshot := range models {
+			if snapshot.Provider == "fal" {
+				image = snapshot
+			}
+			if snapshot.Provider == "openrouter" {
+				llm = snapshot
 			}
 		}
+	} else {
+		var err error
+		llm, err = client.PublicModel(ctx, llm)
+		if err != nil {
+			return err
+		}
+		prompt, err := workflow.Render(wf.Definition.Nodes[1].PromptTemplate, domain.Object{"description": *input}, nil)
+		if err != nil {
+			return err
+		}
+		price, f := client.Estimate(ctx, image)
+		if f != nil {
+			return f
+		}
+		priceValue, e := decimal.NewFromString(price)
+		if e != nil || priceValue.IsNegative() || priceValue.GreaterThan(decimal.RequireFromString("0.50")) {
+			return fmt.Errorf("fal estimate exceeds demo review threshold or is invalid: %s", price)
+		}
+		inputRate, e1 := decimal.NewFromString(llm.Pricing.InputPerMillion)
+		outputRate, e2 := decimal.NewFromString(llm.Pricing.OutputPerMillion)
+		if e1 != nil || e2 != nil || inputRate.Mul(decimal.NewFromInt(1000)).Add(outputRate.Mul(decimal.NewFromInt(300))).Div(decimal.NewFromInt(1000000)).GreaterThan(decimal.RequireFromString("0.05")) {
+			return fmt.Errorf("OpenRouter estimated request exceeds demo review threshold")
+		}
+		record["fal_estimated_cost_usd"] = price
+		record["started_at"] = time.Now().UTC()
+		record["input"] = domain.Object{"description": *input}
+		record["workflow"] = wf
+		record["models"] = []domain.Model{llm, image}
+		record["rendered_prompt"] = prompt
+		record["llm_params"] = workflow.Merge(llm.Defaults, wf.Definition.Nodes[1].Params)
+		record["phase"] = "llm_sending"
+		if e := write(*evidence, record); e != nil {
+			return e
+		}
+		response, f := client.Complete(ctx, llm, prompt, workflow.Merge(llm.Defaults, wf.Definition.Nodes[1].Params))
+		record["completion"] = response
+		if f != nil {
+			record["error"] = f
+			_ = write(*evidence, record)
+			return f
+		}
+		record["phase"] = "fal_sending"
+		record["image_params"] = workflow.Merge(image.Defaults, wf.Definition.Nodes[2].Params)
+		if e := write(*evidence, record); e != nil {
+			return e
+		}
+		ticket, f = client.Submit(ctx, image, response.Prompt, workflow.Merge(image.Defaults, wf.Definition.Nodes[2].Params))
+		if ticket.ID != "" {
+			record["ticket"] = ticket
+		}
+		if f != nil {
+			record["error"] = f
+			_ = write(*evidence, record)
+			return f
+		}
+		record["ticket"] = ticket
+		record["phase"] = "fal_waiting"
+		if e := write(*evidence, record); e != nil {
+			return e
+		}
 	}
-	return scanner.Err()
+	log := telemetry.Logger("direct", "cli")
+	log.Info("Fal ticket saved before polling", "event", "direct.provider_checkpoint", "provider_request_id", ticket.ID, "actual_model_id", image.ModelID)
+	for {
+		state, f := client.Status(ctx, ticket)
+		if f != nil {
+			return f
+		}
+		if state.Error != nil {
+			return state.Error
+		}
+		if state.Status == "COMPLETED" {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
+	}
+	result, f := client.Result(ctx, ticket)
+	if f != nil {
+		return f
+	}
+	record["result"] = result
+	record["phase"] = "complete"
+	record["finished_at"] = time.Now().UTC()
+	if e := write(*evidence, record); e != nil {
+		return e
+	}
+	log.Info("Direct experiment completed", "event", "direct.completed", "provider_request_id", ticket.ID, "actual_model_id", image.ModelID, "evidence", *evidence)
+	return nil
 }

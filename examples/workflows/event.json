@@ -1,0 +1,19 @@
+{
+  "id": "10000000-0000-4000-8000-000000000002",
+  "name": "Etkinlik afişi",
+  "description": "Etkinlik fikrinden yazısız dikey afiş görseli üretir.",
+  "definition": {
+    "schemaVersion": 1,
+    "nodes": [
+      {"id": "input", "kind": "input", "params": {"inputSchema": {"type": "object", "properties": {"description": {"type": "string", "minLength": 1, "maxLength": 2000}}, "required": ["description"], "additionalProperties": false}, "textField": "description"}},
+      {"id": "art_director", "kind": "llm", "modelRef": "prompt-writer", "params": {}, "promptTemplate": "Write one English image prompt for an expressive vertical event poster illustration. Describe a clear composition, vibrant colors and visual symbols for the event. Do not include lettering or logos. Return only the prompt. Event: {{input.description}}"},
+      {"id": "poster", "kind": "image", "modelRef": "flux-dev", "params": {"image_size": {"width": 512, "height": 768}, "num_images": 1}, "promptTemplate": "{{nodes.art_director.prompt}}"},
+      {"id": "output", "kind": "output", "params": {}}
+    ],
+    "edges": [
+      {"from": "input", "fromPort": "text", "to": "art_director", "toPort": "text"},
+      {"from": "art_director", "fromPort": "prompt", "to": "poster", "toPort": "prompt"},
+      {"from": "poster", "fromPort": "image", "to": "output", "toPort": "image"}
+    ]
+  }
+}

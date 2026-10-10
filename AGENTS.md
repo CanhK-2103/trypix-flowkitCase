@@ -1,27 +1,17 @@
 # FlowKit project instructions
 
-This repository implements the Trypix FlowKit case. Build in understandable stages with the candidate. Explain substantive design decisions in Turkish and keep code identifiers in English.
+Implement the approved PLAN.md. Explain decisions in Turkish; use English code identifiers.
 
-## Requirements
-
-- Prefer Go for the backend. The main assessment is backend correctness and flexibility.
-- First prove a direct OpenRouter -> fal queue workflow with real providers, then migrate that same model, prompt and parameters into the engine.
-- Workflow definitions and model aliases must live in data. Adding a compatible model or a second workflow must not require code changes or a restart.
-- Never infer a missing model or silently substitute a different model.
-- Validate every workflow creation and update; return a list of findings.
-- Execute runs asynchronously. Store the fal request ID immediately after submission.
-- Retry only transient provider errors, at most three total attempts per node.
-- Record actual model, node inputs/outputs, attempts, timing and typed errors persistently.
-- Log JSON with run_id, node_id and attempt; never log API keys.
-- Tests must never call real providers. Use local HTTP fixtures or mock adapters.
-- Do not claim acceptance scenarios succeeded unless they were actually executed.
-- Finish required functionality before optional bonuses.
-
-## Working conventions
-
-- Keep provider secrets in ignored .env files. Never place them in frontend code or Git.
-- Keep dependencies and abstractions small; document tradeoffs.
-- Run gofmt, go test ./... and go vet ./... for meaningful Go changes.
-- Maintain docs/AI_LOG.md with actual assistance, errors and corrections. Do not invent a story about AI mistakes.
-- README must distinguish current functionality from planned functionality.
-- No external publication or messages are needed to implement and test locally.
+- Go API, separate River worker, PostgreSQL, sqlc, Goose; React/TypeScript with TanStack Query and CodeMirror.
+- Establish the direct OpenRouter → fal queue experiment first. If local keys are unavailable, prepare the executable experiment and continue independent work; never fabricate live evidence.
+- Workflows and compatible model identifiers are data. Never infer models or silently substitute them.
+- Validate create/update and return all independent findings.
+- Commit fal request IDs immediately, before polling, pricing or media downloads. Persist every execution phase. Resume known IDs; uncertain submissions fail without blind resubmission.
+- Maximum three domain attempts per node, transient errors only; queue recovery is separate.
+- Run creation and River enqueue share one PostgreSQL transaction. Preserve idempotency and historical snapshots.
+- Costs use exact decimal arithmetic, unknown costs are null/partial; polling and restart do not create another charge.
+- JSON logs include run_id, node_id and attempt, including null context. Never log credentials.
+- Tests use local mock providers, pricing and media only. Run gofmt, go test ./..., go vet ./..., integration tests, frontend typecheck/build and sqlc regeneration checks.
+- Secrets only in ignored .env; never frontend/Git. Real tests are sequential, minimal, with fal $5 / OpenRouter $2 hard limits and planned $0.50 / $0.05 review thresholds.
+- Record actual work, errors and corrections in docs/AI_LOG.md. Distinguish implemented, tested and live verified results.
+- Do not restore pre-existing deleted files blindly; recreate files for the approved implementation.

@@ -1,0 +1,9 @@
+{
+  "alias": "flux-schnell",
+  "provider": "fal",
+  "modelId": "fal-ai/flux/schnell",
+  "inputProfile": "fal-text-to-image-v1",
+  "defaults": {"num_images": 1, "num_inference_steps": 4, "image_size": {"width": 512, "height": 512}},
+  "enabled": true,
+  "pricing": {"currency": "USD", "unit": "megapixel", "unitPrice": "0.003", "source": "fal public model page; rounded up to one megapixel", "updatedAt": "2026-10-10T00:00:00Z"}
+}

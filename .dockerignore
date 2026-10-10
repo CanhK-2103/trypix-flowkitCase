@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+web/node_modules
+web/dist
+artifacts
+evidence/local
+tools/bin
+*.exe

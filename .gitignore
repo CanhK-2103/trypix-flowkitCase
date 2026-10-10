@@ -1,9 +1,12 @@
 .env
 .env.*
 !.env.example
-.tools/
-tmp/
-artifacts/direct/
-bin/
+artifacts/
+evidence/local/
+tools/bin/
+web/node_modules/
+web/dist/
+coverage*
 *.exe
-coverage.out
+*.test
+.DS_Store

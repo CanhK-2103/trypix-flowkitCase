@@ -1,0 +1,19 @@
+{
+  "id": "10000000-0000-4000-8000-000000000001",
+  "name": "Ürün katalog görseli",
+  "description": "Ürün açıklamasından sade stüdyo fotoğrafı üretir.",
+  "definition": {
+    "schemaVersion": 1,
+    "nodes": [
+      {"id": "input", "kind": "input", "params": {"inputSchema": {"type": "object", "properties": {"description": {"type": "string", "minLength": 1, "maxLength": 2000}}, "required": ["description"], "additionalProperties": false}, "textField": "description"}},
+      {"id": "prompt_writer", "kind": "llm", "modelRef": "prompt-writer", "params": {"reasoning": {"effort": "none"}, "max_completion_tokens": 300}, "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"},
+      {"id": "render", "kind": "image", "modelRef": "flux-schnell", "params": {"image_size": {"width": 512, "height": 512}, "num_images": 1}},
+      {"id": "output", "kind": "output", "params": {}}
+    ],
+    "edges": [
+      {"from": "input", "fromPort": "text", "to": "prompt_writer", "toPort": "text"},
+      {"from": "prompt_writer", "fromPort": "prompt", "to": "render", "toPort": "prompt"},
+      {"from": "render", "fromPort": "image", "to": "output", "toPort": "image"}
+    ]
+  }
+}

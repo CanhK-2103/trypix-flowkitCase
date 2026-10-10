@@ -1,0 +1,9 @@
+{
+  "alias": "prompt-writer",
+  "provider": "openrouter",
+  "modelId": "openai/gpt-6-luna",
+  "inputProfile": "openrouter-chat-text-v1",
+  "defaults": {"reasoning": {"effort": "none"}, "max_completion_tokens": 300},
+  "enabled": true,
+  "pricing": {"currency": "USD", "unit": "tokens", "inputPerMillion": "0.10", "outputPerMillion": "0.50", "source": "OpenRouter public model metadata; verify before live demo", "updatedAt": "2026-10-10T00:00:00Z"}
+}

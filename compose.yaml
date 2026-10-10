@@ -1,0 +1,78 @@
+name: flowkit
+x-app: &app
+  image: flowkit-backend:local
+  build: .
+  environment: &env
+    DATABASE_URL: postgres://flowkit:flowkit@db:5432/flowkit?sslmode=disable
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    FAL_KEY: ${FAL_KEY:-}
+    ARTIFACT_DIR: /data/artifacts
+    LOG_LEVEL: ${LOG_LEVEL:-debug}
+    WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+services:
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: flowkit
+      POSTGRES_PASSWORD: flowkit
+      POSTGRES_DB: flowkit
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U flowkit -d flowkit]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    logging: *logging
+  init:
+    <<: *app
+    command: [init]
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *app
+    command: [api]
+    volumes:
+      - artifacts:/data/artifacts:ro
+    depends_on:
+      init: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://localhost:8080/health/ready]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  worker:
+    <<: *app
+    command: [worker]
+    volumes:
+      - artifacts:/data/artifacts
+    depends_on:
+      init: {condition: service_completed_successfully}
+    restart: unless-stopped
+    stop_grace_period: 45s
+  bootstrap:
+    <<: *app
+    entrypoint: [bootstrap]
+    environment:
+      <<: *env
+      API_URL: http://api:8080
+      LOAD_EXAMPLES: ${LOAD_EXAMPLES:-true}
+    depends_on:
+      api: {condition: service_healthy}
+  dashboard:
+    build: ./web
+    ports: ["127.0.0.1:${DASHBOARD_PORT:-8080}:80"]
+    depends_on:
+      api: {condition: service_healthy}
+      bootstrap: {condition: service_completed_successfully}
+    restart: unless-stopped
+    logging: *logging
+volumes:
+  database:
+  artifacts:

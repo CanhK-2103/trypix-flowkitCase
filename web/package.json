@@ -1,0 +1,31 @@
+{
+  "name": "flowkit-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@codemirror/lang-json": "6.0.2",
+    "@codemirror/lint": "6.8.5",
+    "@codemirror/state": "6.5.4",
+    "@codemirror/view": "6.39.10",
+    "@tanstack/react-query": "5.104.1",
+    "codemirror": "6.0.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "6.1.2",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.10",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

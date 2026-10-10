@@ -1,47 +1,29 @@
-# FlowKit kabul kontrol listesi
+# Kabul durumu
 
-Teslim tarihi: 12 Ekim 2026. Bu dosya case gereksinimlerinin takip listesidir; işaretlenmemiş maddeler tamamlandı kabul edilmez.
+Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sağlayıcı çağrısı yapmaz.
 
-## Gerçek sağlayıcı denemeleri
+## 10 Ekim 2026 — çalıştırılmış kontroller
 
-- [ ] Doğrudan OpenRouter -> fal.ai akışı başarıyla çalıştırıldı; model, prompt, parametre ve sonuç kaydı var.
-- [ ] Aynı akış FlowKit'e taşındı; README eşleştirme tablosu gerçek denemeyle örtüşüyor.
-- [ ] İkinci workflow yalnızca API/dashboard ile eklendi; farklı bir görsel modeli kullandı.
-- [ ] Yeni uyumlu model API ile eklendi, workflow modelRef değiştirildi, yeni run tamamlandı; kod/deploy/restart yok.
+- Go paketleri derlendi; graf doğrulama ve motor testleri geçti.
+- Dedicated PostgreSQL 18.6 üzerinde katalog/workflow CRUD, doğrulama findings listesi, geçersiz update sonrası revision korunması, model devre dışı bırakma ve soft-delete testleri geçti.
+- Aynı idempotency key ile 10 eşzamanlı istek: yalnızca 1 run ve 1 River job; diğerleri aynı run'ı döndürdü. Farklı input conflict ve workflow silindikten sonra replay doğrulandı.
+- Run ile River job aynı transaction'da rollback oldu; orphan job/run oluşmadı. NUMERIC(24,12), UUID, JSONB ve UTC timestamp dönüşümleri kontrol edildi.
+- Gerçek River worker ve local HTTP mock'larıyla başarı, transient 503 → retry → başarı, kalıcı image 422 → doğru node/error code ile failure doğrulandı. Kalıcı görsel API'den okundu.
+- Worker child process, fal request ID commit edildikten sonra fakat River Work dönmeden zorla sonlandırıldı. İkinci process aynı DB'den devam ederek tamamladı: 1 fal submit, 1 LLM call, 1 image domain attempt, 1 provider request ve 1 maliyet kaydı.
+- Çalışan API/worker değiştirilmeden yeni compatible model alias'ı API'den kaydedildi, workflow'un modelRef'i API ile değiştirildi ve mock run yeni endpoint ile tamamlandı. İkinci workflow da HTTP ile eklendi.
+- Frontend TypeScript/build, 4 request/polling testi ve CodeMirror external update/user edit regresyon testi geçti.
+- `docker compose up --build -d` temiz volume'larla çalıştı; API ready, worker, dashboard, 3 model ve 2 workflow doğrulandı. Bootstrap tekrar çalıştırıldı; mevcut workflow revision 3 ve name korundu.
+- Tarayıcıda JSON doğrulama/kaydetme, save sonrası dirty temizlenmesi ve bozuk JSON için butonların kapanması kontrol edildi. İlk kurulum ekranı dar/masaüstü görünümünde incelendi.
+- API container'ı farklı Docker IP'si ile yeniden oluşturuldu. Gateway container'ı değiştirilmeden `/health/ready` yaklaşık 2,5 saniyede başarılı oldu; models/workflows API erişimi tekrar kontrol edildi.
+- API/worker/init/bootstrap çıktılarındaki 1157 satır parse edildi; JSON olmayan veya run_id/node_id/attempt alanı eksik satır sayısı 0. Ayrıca logger context alanlarının duplicate/null ile ezilmediği test edildi.
+- sqlc 1.31.1 tekrar üretiminde generated dosyaların hash'leri değişmedi; go vet geçti. Frontend production dependency audit 0 açık bildirdi.
 
-## API ve veri
+## Henüz doğrulanmamış canlı kabul
 
-- [ ] Model kataloğu: alias ile kayıt, listeleme, devre dışı bırakma ve temel CRUD.
-- [ ] Workflow: oluşturma, listeleme, detay, güncelleme, silme, ayrı doğrulama endpoint'i.
-- [ ] JSON node alanları: id, kind, modelRef, params, prompt şablonu; edge alanları: from, fromPort, to, toPort.
-- [ ] input, llm, image, output türleri; text, prompt, image portları.
-- [ ] Döngü, dallanma/birleşme, bağlantısız node/zorunlu port, uyumsuz port, bilinmeyen model ve çözülemeyen şablon değişkeni reddediliyor.
-- [ ] Oluşturma VE güncelleme bütün doğrulama bulgularını döndürüyor.
-- [ ] POST /workflows/{id}/runs işi bitirmeden run_id dönüyor; durum ve detay endpoint'leri var.
+- Gerçek doğrudan OpenRouter → fal denemesi.
+- Aynı modeller/prompt/parametrelerle FlowKit run'ı.
+- Schnell → API ile Dev kaydı → modelRef güncelleme → gerçek Dev run'ı; servis restart olmadan.
+- İkinci workflow'un gerçek Dev run'ı.
+- Gerçek sağlayıcı harcamaları ve fiyat snapshot'ları.
 
-## Motor ve görünürlük
-
-- [ ] Ayrı worker adımları sırayla yürütüyor; önceki çıktı sonraki node tarafından kullanılabiliyor.
-- [ ] fal queue submit -> status -> result; provider_request_id submit sonrası hemen kalıcı kaydediliyor.
-- [ ] Geçici/kalıcı hata ayrımı; node başına toplam en fazla 3 deneme, artan bekleme.
-- [ ] Başarısız node ve hata nedeni kalıcı; adım bazında girdi/çıktı, kullanılan model, süre, deneme izi var.
-- [ ] JSON loglar: run_id, node_id, attempt; provider hata kodu ve mesajı error seviyesinde.
-- [ ] Dashboard: workflow listesi, JSON editörü, doğrula/kaydet, girdi formu, run geçmişi/detayı.
-- [ ] Her üretilen görselin yanında gerçek model gösteriliyor.
-
-## Test ve teslim
-
-- [ ] En az 3 doğrulama kuralını reddeden testler.
-- [ ] Mock sağlayıcıyla başarılı run, geçici hata + retry + başarı, kalıcı hata + doğru node/kod testleri.
-- [ ] Workflow ve katalog CRUD testleri; testlerde gerçek sağlayıcı çağrısı yok.
-- [ ] docker compose up API, worker, PostgreSQL ve dashboard'u başlatıyor.
-- [ ] .env.example, endpoint örnekleri, graf şeması, hata/retry politikası README'de.
-- [ ] Gerçek iki run ve yeni model senaryosu README'de kanıtlanmış.
-- [ ] AGENTS.md ve AI kullanım açıklaması; bir hafta daha olsaydı paragrafı.
-- [ ] GitHub repository erişimi hazır.
-
-## Bonus (zorunlu değil)
-
-- [ ] Worker restart sonrası aynı fal isteğini tekrar göndermeden devam etme kanıtı.
-- [ ] İstemci idempotency key.
-- [ ] Tahmini maliyet izi.
+Başlangıçta yerel API anahtarları yoktu. Anahtarlar hazır olunca `cmd/direct` ve `cmd/acceptance` çalıştırılır; çıktılar run/request kimlikleriyle bu dosyaya eklenir. Mock kanıtı gerçek üretim kanıtı olarak sunulmaz.
