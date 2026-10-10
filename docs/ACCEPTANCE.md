@@ -34,12 +34,43 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 - Frontend sekiz test, typecheck/build; tam Go/PostgreSQL entegrasyon testleri, go vet ve sqlc tekrar üretim kontrolü geçti. Docker Compose yeniden build ile sağlıklı başladı; gateway/gerçek worker üzerinde ücretsiz input→output smoke kontrolü geçti.
 - Gerçek fal billing key yetkileri ve canlı faturalama tutarları henüz doğrulanmadı; anahtar girişi kullanıcı isteğiyle en sona bırakıldı.
 
+## 11 Ekim 2026 — ilk canlı OpenRouter adımı
+
+- Kullanıcı onayıyla yalnızca bir `POST /api/v1/chat/completions` çağrısı yapıldı. Requested ve actual model `openai/gpt-6-luna`; reasoning none, max_completion_tokens 300.
+- Girdi: “Ahşap saplı, mat mavi seramik kahve kupası.” Model İngilizce ürün görseli prompt'u üretti; yanıt 1671 ms'de geldi.
+- Provider request ID: `gen-1791671071-VEEBbsEAFLKL1RRnHBHh`. Kullanım: 58 input, 71 output, toplam 129 token. Yanıttaki gerçek `usage.cost`: `0.0000413 USD`.
+- Gönderim checkpoint'i ve ham sağlayıcı yanıtı ignored `evidence/local/direct.json` dosyasında. Bu OpenRouter adımında fal çağrısı yapılmadı; ayrı onayla sonraki gönderim aşağıda kaydedildi.
+
+## 11 Ekim 2026 — ilk canlı fal kuyruk gönderimi
+
+- Ayrı kullanıcı onayıyla yalnızca bir `POST https://queue.fal.run/fal-ai/flux/schnell` çağrısı yapıldı. Girdi önceki OpenRouter çıktısı; 512×512, 1 görsel, 4 inference step.
+- Sağlayıcı kuyruğu isteği kabul etti: `provider_request_id=01a127ed-1583-7c50-8eb7-0688dddc4466`. Gönderim 593 ms. Request ID ve status/result URL'leri derhal ignored `evidence/local/direct.json` dosyasına yazıldı.
+- Faz `fal_waiting`. Status/result sorgulanmadığından tamamlanmış görsel kanıtı henüz yok; 0.003 USD public fiyat tahmini gerçek billed ücret olarak sunulmuyor.
+- Bu doğrudan deneme dosya checkpoint'i kullanır; FlowKit run'ı veya DB üretim kaydı henüz oluşturulmadı. DB üzerinden canlı kabul aşağıda bekliyor.
+
+## 11 Ekim 2026 — ilk canlı fal durum sorgusu
+
+- Ayrı kullanıcı onayıyla aynı fal request ID'nin kaydedilmiş status URL'si yalnızca bir kez sorgulandı. `COMPLETED` döndü; sağlayıcı hatası yok, sorgu süresi 522 ms.
+- Status yanıtı ignored `evidence/local/direct.json` içinde. Güncel faz `fal_result_pending`; sonuç/görsel henüz alınmadı. Yeni üretim, retry, ek polling veya billing sorgusu yapılmadı.
+
+## 11 Ekim 2026 — ilk doğrudan zincirin tamamlanması
+
+- Ayrı kullanıcı onayıyla aynı request ID'nin result URL'si yalnızca bir kez sorgulandı; 533 ms'de 512×512 tek görsel ve billable units 1 döndü. Güncel faz `complete`.
+- Görsel: https://v3b.fal.media/files/b/0aaddf91/LSonJO8IbWMVUppDPmUY7.jpg. Anahtarsız [doğrudan deney kanıtı](evidence/direct.json), model/prompt/parametre eşleştirmesi README'de. Ham yanıt yerel ignored checkpoint'te.
+- Bu deney toplam dört anahtarlı HTTP çağrısıyla yapıldı: 1 OpenRouter completion, 1 fal submit, 1 fal status, 1 fal result. Billing ve ek üretim yapılmadı.
+- OpenRouter gerçek yanıt tutarı 0.0000413 USD; fal actual cost ve gerçek toplam null/pending. Üretimin tamamlanması billing doğrulaması sayılmadı. FlowKit DB run'ı henüz yok.
+
+## 11 Ekim 2026 — canlı fal faturalama yetki kontrolü
+
+- Koşullu ayrı kullanıcı onayıyla mevcut request ID, `fal-ai/flux/schnell` ve `source=billed` filtreleriyle tek read-only billing-events GET isteği yapıldı. Transport ilave istekleri (pagination dahil) yerelde engelleyecek şekilde sınırlandı.
+- HTTP 403: “This API key is not permitted to perform this action.”; süre 475 ms. Mevcut anahtarın faturalama okuma erişimi olmadığı canlı olarak görüldü. Resmi endpoint BILLING/FULL preset veya `billing:usage:read`, `auth:keys:read`, `account:users:read` yetkileri gerektiriyor.
+- Güncel gerçek maliyet durumu unavailable; fal actual ve gerçek toplam null. Üretim complete olarak kaldı. Toplam beş anahtarlı HTTP çağrısı; ilave model üretimi veya retry yapılmadı. Anahtarsız kanıt erişim hatasını da içeriyor.
+
 ## Henüz doğrulanmamış canlı kabul
 
-- Gerçek doğrudan OpenRouter → fal denemesi.
 - Aynı modeller/prompt/parametrelerle FlowKit run'ı.
 - Schnell → API ile Dev kaydı → modelRef güncelleme → gerçek Dev run'ı; servis restart olmadan.
 - İkinci workflow'un gerçek Dev run'ı.
-- Gerçek sağlayıcı harcamaları ve fiyat snapshot'ları.
+- Fal gerçek harcamaları ve kalan canlı run'ların fiyat/maliyet kayıtları; ilk OpenRouter yanıt tutarı yukarıda doğrulandı.
 
-Başlangıçta yerel API anahtarları yoktu. Kullanıcının 11 Ekim 2026 isteğiyle anahtarların girilmesi ve canlı kabul en sona bırakıldı. Anahtarlar hazır olunca `cmd/direct` ve `cmd/acceptance` çalıştırılır; çıktılar run/request kimlikleriyle bu dosyaya eklenir. Mock kanıtı gerçek üretim kanıtı olarak sunulmaz.
+Başlangıçta yerel API anahtarları yoktu. Anahtarlar girildikten sonra kullanıcı her gerçek anahtar kullanımı için ayrı onay şartı koydu. Canlı adımlar yalnızca açıkça onaylanan çağrılarla yürütülür; otomatik ek çağrı yapan `cmd/direct` veya `cmd/acceptance` bu çağrıların kapsamı ayrıca onaylanmadan çalıştırılmaz. Çıktılar run/request kimlikleriyle bu dosyaya eklenir. Mock kanıtı gerçek üretim kanıtı olarak sunulmaz.

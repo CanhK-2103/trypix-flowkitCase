@@ -14,5 +14,6 @@ Implement the approved PLAN.md. Explain decisions in Turkish; use English code i
 - JSON logs include run_id, node_id and attempt, including null context. Never log credentials.
 - Tests use local mock providers, pricing and media only. Run gofmt, go test ./..., go vet ./..., integration tests, frontend typecheck/build and sqlc regeneration checks.
 - Secrets only in ignored .env; never frontend/Git. Real tests are sequential, minimal, with fal $5 / OpenRouter $2 hard limits and planned $0.50 / $0.05 review thresholds.
+- Live credentials being present is not authorization to use them. Obtain explicit user approval before every live credential use, stating the provider/model, operation and estimated cost. Approval covers only the expressly approved uses; do not make additional requests, retries, polling or billing calls without approval. Do not start or trigger services/scripts that would make unapproved live calls in the background. Continue independent work with local mocks.
 - Record actual work, errors and corrections in docs/AI_LOG.md. Distinguish implemented, tested and live verified results.
 - Do not restore pre-existing deleted files blindly; recreate files for the approved implementation.

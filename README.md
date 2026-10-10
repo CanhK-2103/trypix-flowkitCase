@@ -119,6 +119,8 @@ go run ./cmd/direct
 
 Komut örnek workflow/model dosyalarını kullanır; her aşamayı ignored `evidence/local/direct.json` dosyasına kaydeder. Mevcut evidence dosyası varken normal komut yeni ücretli üretim başlatmaz. Anahtar yoksa çağrı yapılmadan durur.
 
+11 Ekim 2026'da kullanıcı her anahtarlı çağrıyı ayrı onayladı; mevcut sağlayıcı adaptörleriyle dört çağrılık doğrudan deneme tamamlandı. `openai/gpt-6-luna` 58 input / 71 output token ve `usage.cost=0.0000413 USD` döndürdü. `fal-ai/flux/schnell` isteği `01a127ed-1583-7c50-8eb7-0688dddc4466`, COMPLETED ve 512×512 görsel döndürdü. [Anahtarsız kanıt kaydı](docs/evidence/direct.json), [görsel](https://v3b.fal.media/files/b/0aaddf91/LSonJO8IbWMVUppDPmUY7.jpg). Sonraki ayrı onaylı tek billing-events sorgusu 403 döndü: kullanılan anahtarın faturalama okuma yetkisi yok. Fal için 0.003 USD yalnızca tahmindir; fal gerçek ücret ve gerçek toplam null/unavailable. Bu deney standalone istemciyle yapıldı; henüz FlowKit DB run'ı değildir. Anahtarların bulunması izin sayılmaz; otomatik ek çağrı yapan demo komutları kapsamları ayrıca onaylanmadan çalıştırılmaz.
+
 | Doğrudan deneme | FlowKit karşılığı |
 |---|---|
 | Ürün açıklaması | input.description / input node textField |

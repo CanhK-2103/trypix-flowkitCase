@@ -33,3 +33,35 @@
 - OR usage.cost yoksa generation metadata fallback eklendi. Başlangıç tahmini paid çağrı olmadan katalog/parametreler ve açık token varsayımı ile hesaplanır; run kabulündeki snapshot değişmez.
 - Gerçek toplamın önceki reported ara toplamından farklı olduğu kod/UI sözleşmesiyle ayrıldı: herhangi bir ücret eksikse actual total null olur. Mock testlerde gecikme, backoff, 403, pagination, kesin decimal, restart/refresh ve duplicate üretim olmaması doğrulandı; canlı ücret kanıtı üretildiği iddia edilmedi.
 - OpenAPI düzenlemesinde initial_estimate alanı ilk olarak NodeRun bölümüne eklendi; üretilen şema kontrolünde fark edilip Run bölümüne taşındı. Frontend typecheck/build, engine ve PostgreSQL testleri ayrı kontrol edildi.
+
+## 2026-10-11 — onaylı ilk canlı OpenRouter çağrısı
+
+- Kullanıcı anahtarları yerel `.env` dosyasına ekledi ve her gerçek anahtar kullanımından önce ayrı onay istedi. Bu sınır AGENTS.md'ye kaydedildi; dosyada anahtar bulunması kullanım izni sayılmadı.
+- Kullanıcı yalnızca bir OpenRouter completion isteğini onayladı. Otomatik fal/pricing/polling çağrıları da yapan mevcut direct komutu çalıştırılmadı; mevcut Go sağlayıcı adaptörü tek istekle kullanıldı. İstek öncesi ve yanıt sonrası ignored `evidence/local/direct.json` dosyasına checkpoint yazıldı.
+- `openai/gpt-6-luna`, reasoning none ve max_completion_tokens 300 ile başarılı yanıt döndü. Gerçek response ID: `gen-1791671071-VEEBbsEAFLKL1RRnHBHh`; 58 input + 71 output token; sağlayıcının `usage.cost` tutarı `0.0000413 USD`; istek süresi 1671 ms. Bu tutar doğrudan sağlayıcı yanıtıdır, tahmin değildir.
+- Fal üretimi ve tam FlowKit canlı kabulü henüz yapılmadı. Bu aşamada retry, billing veya başka anahtarlı sağlayıcı isteği gönderilmedi; sonraki kullanım ayrı kullanıcı onayı bekliyor.
+
+## 2026-10-11 — onaylı ilk canlı fal kuyruk gönderimi
+
+- Kullanıcı tek fal üretim isteğini ayrıca onayladı. Kaydedilmiş OpenRouter prompt'u ile `fal-ai/flux/schnell`, 512×512, 1 görsel, 4 inference step kullanılarak yalnızca bir queue submit yapıldı.
+- Fal istek kimliği `01a127ed-1583-7c50-8eb7-0688dddc4466`; gönderim süresi 593 ms. Kimlik ve sağlayıcının status/result URL'leri herhangi bir sorgu yapılmadan `evidence/local/direct.json` dosyasında kalıcılaştırıldı. Faz `fal_waiting`; tamamlanma ve gerçek fal maliyeti henüz sorgulanmadı.
+- Kullanıcıya bu doğrudan API deneyinin dosya checkpoint'i kullandığı ve henüz bir FlowKit DB run'ı oluşturmadığı açıklandı. FlowKit motorunun DB kayıtlarıyla doğrudan deneme kanıtı karıştırılmadı.
+- Ek status/result/pricing/billing isteği ve retry gönderilmedi. Public model sayfasından kontrol edilen 0.003 USD tahmini gerçek fal ücreti olarak sunulmadı.
+
+## 2026-10-11 — onaylı fal durum sorgusu
+
+- Kullanıcının ayrı onayıyla kaydedilmiş fal status URL'si bir kez sorgulandı. Aynı `01a127ed-1583-7c50-8eb7-0688dddc4466` isteği `COMPLETED` ve hatasız döndü; sorgu 522 ms sürdü.
+- Ham status yanıtı ve onay kapsamı `evidence/local/direct.json` içinde kalıcılaştırıldı; faz `fal_result_pending`. Toplam üç anahtarlı çağrı yapıldı: bir OpenRouter completion, bir fal submit ve bir fal status. Result, billing, ek polling veya yeni üretim çağrısı yapılmadı.
+
+## 2026-10-11 — onaylı fal sonucu ve doğrudan denemenin tamamlanması
+
+- Ayrı kullanıcı onayıyla aynı fal isteğinin result URL'si bir kez sorgulandı. 512×512 tek görsel, `X-Fal-Billable-Units=1` ve geçerli görsel URL'si geldi; sorgu 533 ms sürdü. Doğrudan deneme fazı `complete`; toplam dört anahtarlı HTTP çağrısı, birer LLM ve görsel üretimi var.
+- Görsel URL'si ve ham yanıt ignored checkpoint'e yazıldı. Anahtarsız, gerekli alanlarla sınırlı kanıt `docs/evidence/direct.json` olarak hazırlandı; README eşleştirme tablosuyla ilişkilendirildi. Doğrudan deneme DB run'ı olarak sunulmadı.
+- Billable unit değeri gerçek ücret sayılmadı; fal actual ve actual total null/pending olarak korundu. Billing veya ek üretim çağrısı yapılmadı.
+
+## 2026-10-11 — koşullu onaylı fal faturalama sorgusu
+
+- Kullanıcı yalnızca ek ücret oluşturmayacaksa bir faturalama sorgusuna izin verdi. Resmi Platform API/billing-events ve fiyat belgeleri incelendi: kayıt okuyan yönetim endpoint'i üretim çalıştırmıyor; bu okuma için ayrı bir bedel listelenmiyor. Ücretsiz okuma değerlendirmesi ile tek GET yapıldı; belgelerin açıkça sorgu fiyat garantisi verdiği iddia edilmedi.
+- Mevcut sağlayıcı billing adaptörü kullanıldı, ancak HTTP transport en fazla bir GET'e ve yalnızca onaylanan request ID/model/source=billed filtresine izin verecek şekilde sınırlandı. Olası ek pagination isteği dahi yerelde engellenir; otomatik retry yok.
+- Tek sorgu 475 ms'de HTTP 403 ve “This API key is not permitted to perform this action.” döndürdü. Kullanılan anahtar bu faturalama okumasına yetkili değil; üretim başarı durumu korunarak gerçek fal ücret ve gerçek toplam null/unavailable bırakıldı.
+- Sonuç ignored checkpoint, anahtarsız kanıt ve kabul kayıtlarına yazıldı. Toplam beş anahtarlı HTTP çağrısı; üretim sayısı bir LLM ve bir görsel olarak kaldı. BILLING veya FULL yetkili ayrı FAL_BILLING_KEY olmadan gerçek fal ücreti doğrulanmış gibi gösterilmedi.

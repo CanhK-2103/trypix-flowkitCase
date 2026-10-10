@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "experiment": "Direct OpenRouter to fal queue",
+  "execution_system": "Standalone provider clients; not a FlowKit database run",
+  "input": {
+    "description": "Ahşap saplı, mat mavi seramik kahve kupası."
+  },
+  "started_at": "2026-10-10T22:24:32.5899706Z",
+  "finished_at": "2026-10-10T22:29:53.7204184Z",
+  "authenticated_http_calls": 5,
+  "llm": {
+    "provider": "openrouter",
+    "requested_model": "openai/gpt-6-luna",
+    "actual_model": "openai/gpt-6-luna",
+    "provider_request_id": "gen-1791671071-VEEBbsEAFLKL1RRnHBHh",
+    "prompt_template": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}",
+    "rendered_prompt": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: Ahşap saplı, mat mavi seramik kahve kupası.",
+    "params": {
+      "max_completion_tokens": 300,
+      "reasoning": {
+        "effort": "none"
+      }
+    },
+    "output_prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle. Preserve its simple shape, smooth matte glaze, and warm wood grain. Centered alone on a plain, seamless light neutral background, soft diffused lighting, subtle natural shadow, crisp realistic detail. No lettering, logos, props, or decorative elements.",
+    "prompt_tokens": 58,
+    "completion_tokens": 71,
+    "actual_cost_usd": "0.000041300000",
+    "actual_cost_source": "OpenRouter response usage.cost",
+    "duration_ms": 1671
+  },
+  "image": {
+    "provider": "fal",
+    "model_id": "fal-ai/flux/schnell",
+    "identity_source": "submitted_endpoint",
+    "provider_request_id": "01a127ed-1583-7c50-8eb7-0688dddc4466",
+    "params": {
+      "image_size": {
+        "height": 512,
+        "width": 512
+      },
+      "num_images": 1,
+      "num_inference_steps": 4
+    },
+    "prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle. Preserve its simple shape, smooth matte glaze, and warm wood grain. Centered alone on a plain, seamless light neutral background, soft diffused lighting, subtle natural shadow, crisp realistic detail. No lettering, logos, props, or decorative elements.",
+    "status": "COMPLETED",
+    "url": "https://v3b.fal.media/files/b/0aaddf91/LSonJO8IbWMVUppDPmUY7.jpg",
+    "width": 512,
+    "height": 512,
+    "billable_units": "1",
+    "estimated_cost_usd": "0.003000000000",
+    "pricing_source": "https://fal.ai/models/fal-ai/flux/schnell; 0.003 USD per megapixel, rounded up",
+    "actual_cost_usd": null,
+    "submit_duration_ms": 593,
+    "status_duration_ms": 522,
+    "result_duration_ms": 533,
+    "billing": {
+      "http_status": 403,
+      "error": {
+        "code": "PROVIDER_AUTH_ERROR",
+        "message": "Provider rejected the request",
+        "provider_error_message": "This API key is not permitted to perform this action.",
+        "provider_http_status": 403,
+        "retryable": false
+      },
+      "checked_at": "2026-10-10T22:36:04.2725531Z",
+      "duration_ms": 475,
+      "requests_sent": 1
+    }
+  },
+  "actual_total_cost_usd": null,
+  "actual_cost_status": "unavailable_fal_billing_permissions"
+}
