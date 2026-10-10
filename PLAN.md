@@ -344,7 +344,9 @@ fal:
 
 Fiyat isteği üretim request_id'si kaydedildikten sonra yapılır; kısa timeout kullanır. Fiyat/usage alınamazsa başarılı görsel run'ı maliyet yüzünden başarısız olmaz. Bilinmeyen maliyet 0 yapılmaz: alan null, toplam `partial` ve bilinen ara toplam görünür olur. Sağlayıcıya hiç gönderilmeyen local hataların maliyeti 0'dır; gönderim sonucu/ücret belirsizliğinde partial korunur. Gerçek demoda iki modelin fiyat tahmini alındığı ve node/run toplamlarının gösterildiği doğrulanır.
 
-Geniş kapsamlı fatura mutabakatı ve billing-events entegrasyonu ilk teslimin parçası değildir. Provider raporu olmayan fal maliyeti açıkça tahmin olarak etiketlenir.
+11 Ekim 2026 kullanıcı ek isteğiyle başlangıç tahmini ve gerçek toplam maliyet kapsamı eklendi: `/workflows/{id}/estimate` yalnızca katalog verisi ve yaklaşık token hesabıyla üretim öncesi node/toplam tahmini verir. Run kabulünde `initial_estimate` snapshot'ı korunur. Çalıştırma tahmini, her request/node'un gerçek ücreti ve tüm ücretler doğrulandığında gerçek toplam ayrı alanlardır; eksik gerçek maliyet null/pending veya unavailable'dır.
+
+OpenRouter usage.cost yoksa generation ID ile total_cost okunur. Fal Billing Events API source=billed, request_id ve endpoint_id filtreleriyle indirim sonrası cost_total okunur; fiyat × unit hesabı gerçek ücret yerine geçmez. Worker terminal run'ların eksik ücretlerini DB'de saklanan kontrol/zaman bilgisiyle 24 saate kadar uzlaştırır; billing hatası run başarısını değiştirmez ve yeniden üretim göndermez. Billing okuma yetkileri olan ayrı FAL_BILLING_KEY kullanılabilir; yoksa FAL_KEY denenir. Yetki veya gecikme durumları kullanıcıya gösterilir, `/runs/{id}/costs/refresh` yeni üretim olmadan yeniden kontrol planlar. Aylık vergi/fatura ve hesap toplamlarının muhasebeleştirilmesi kapsam dışıdır.
 
 ## 13. Run izi, loglar ve artifact saklama
 
@@ -448,7 +450,7 @@ Unit testler graf/template, input/profile doğrulama, hata sınıflama, backoff 
 | Örnek yükleme ve temiz kurulum | Normal başlangıçta iki workflow/farklı görsel modelleri hazır; provider üretim çağrısı 0; tekrar yükleme düzenlenmiş veya silinmiş kayıtları geri yazmaz |
 | sqlc veri tipi ve transaction uyumu | JSONB/UUID/UTC/null/decimal DB round-trip doğru; run/job transaction'ı rollback olduğunda ikisi de kalmaz |
 
-Dashboard kabul kontrolünde mock run queued/running iken 2 saniyelik polling, succeeded/failed sonrası durma, GET hatasının yeni run üretmemesi ve run mutation'ının otomatik retry yapmaması gözlenir. Ağ yanıtı belirsiz aynı kullanıcı eyleminin tekrarında aynı Idempotency-Key kullanılır. CodeMirror'da bozuk JSON uyarısı, backend'in birden çok bulgusunun görünmesi, hatalı kaydın korunması ve query yenilemesinin kaydedilmemiş metni ezmemesi kontrol edilir. Bunlar tarayıcı üzerinden davranış kontrolleridir; gerçek sağlayıcı çağırmaz.
+Dashboard kabul kontrolünde mock run queued/running iken 2 saniyelik polling, succeeded/failed sonrası maliyet pending ise 15 saniyelik polling, tüm ücretler kesinleşince veya erişilemeyince durma, GET hatasının yeni run üretmemesi ve run mutation'ının otomatik retry yapmaması gözlenir. Ağ yanıtı belirsiz aynı kullanıcı eyleminin tekrarında aynı Idempotency-Key kullanılır. CodeMirror'da bozuk JSON uyarısı, backend'in birden çok bulgusunun görünmesi, hatalı kaydın korunması ve query yenilemesinin kaydedilmemiş metni ezmemesi kontrol edilir. Bunlar tarayıcı üzerinden davranış kontrolleridir; gerçek sağlayıcı çağırmaz.
 
 CI format, sqlc yeniden üretim/fark kontrolü, go vet, unit ve gerekli integration testler ile dashboard typecheck/build çalıştırır. Integration testler ayrı Compose dosyası ve test PostgreSQL'iyle, production verisine dokunmadan çalışır. Canlı sağlayıcı denemeleri test komutlarının parçası değildir; ayrı demo/doğrulama olarak yürütülür.
 
@@ -616,7 +618,7 @@ Teslim: çalışan Compose kurulumu/dashboard, GitHub repository linki, kısa RE
 | 3 | Run acceptance, snapshot, River worker, provider adaptörleri | Mock başarılı run ve asenkron 202; sqlc kayıtları ile River job aynı transaction'da, rollback kanıtlı |
 | 4 | Retry/deadline/error/iz, fal checkpoint ve artifact saklama | Hata testleri, 3 deneme sınırı, restart kanıtı |
 | 5 | Idempotency ve maliyet izi | Eşzamanlı duplicate testi, decimal/dedup/partial maliyet testleri |
-| 6 | Dashboard; TanStack Query ve CodeMirror | API üzerinden edit/validate/run/history/detail/model/cost görünümü; terminal durumda polling duruyor, otomatik run retry yok, syntax/backend bulguları görünür ve kaydedilmemiş metin korunuyor |
+| 6 | Dashboard; TanStack Query ve CodeMirror | API üzerinden edit/validate/run/history/detail/model/cost görünümü; terminal run maliyeti bekliyorsa 15 sn polling; ücret tamamlanınca/erişilemeyince duruyor, otomatik run retry yok, syntax/backend bulguları görünür ve kaydedilmemiş metin korunuyor |
 | 7 | Gerçek iki workflow ve runtime yeni model demosu | Aynı çalışan servislerde Schnell/Dev gerçek run'ları |
 | 8 | README/OpenAPI/AI notları, temiz kurulum ve örnek yükleme kontrolü, son inceleme ve GitHub | İki örnek hazır, yükleme üretim çağırmıyor, mevcut veriyi koruyor; teslim checklist'inin bütün maddeleri kanıtlı |
 
@@ -636,10 +638,10 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 - [x] Geçici hatalar en fazla 3 node attempt; kalıcı hata doğru node/kod ile kaydoluyor.
 - [x] Worker restart bilinen fal isteğini tekrar göndermeden tamamlıyor; process kapatma test kanıtı var.
 - [x] Idempotency eşzamanlı tekrarda tek run/job; payload conflict açık.
-- [x] Tahmini maliyet node/run detayında; fiyat snapshot, dedup ve partial doğru.
+- [x] Başlangıç tahmini formda ve run snapshot'ında; request/node tahmini ve gerçek maliyet ayrı; gerçek toplam yalnızca bütün ücretler doğrulanınca gösteriliyor. Geciken billing, yetki hatası, yenileme ve duplicate maliyet korunması mock testli.
 - [x] Uygulama logları JSON ve run_id/node_id/attempt içeriyor; provider hataları error seviyesinde; DEBUG ayrıntıları, retry/recovery korelasyonu ve secret temizliği doğrulanmış.
 - [x] Dashboard üretici model kimliğini ve adım/deneme/süre/hata bilgilerini run izinden gösteriyor; gerçek üretim görüntüsü canlı kabulde ayrıca kontrol edilecek.
-- [x] TanStack Query aktif run'ı poll ediyor, terminal durumda duruyor; ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
+- [x] TanStack Query aktif run'ı 2 sn, terminal fakat billing bekleyen run'ı 15 sn poll ediyor; maliyet tamamlanınca/erişilemeyince duruyor. Ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
 - [x] CodeMirror JSON sözdizimi hatalarını ve API bulgularını gösteriyor; backend kaydetme doğrulaması zorunlu, kaydedilmemiş metin query yenilemesinde korunuyor.
 - [ ] İlk doğrudan akış ve FlowKit eşleştirmesi gerçek kayıtla belgeli.
 - [ ] İki farklı workflow iki farklı kayıtlı görsel modelle gerçekten çalışıyor.

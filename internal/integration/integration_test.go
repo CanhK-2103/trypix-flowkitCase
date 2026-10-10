@@ -329,6 +329,8 @@ type mockProvider struct {
 	hold                       bool
 	png                        []byte
 	models                     []string
+	billingChecks              int
+	delayBilling               bool
 }
 
 func mock(t *testing.T) *mockProvider {
@@ -360,6 +362,17 @@ func (m *mockProvider) handler(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(domain.Object{"id": "mock-generation", "model": body["model"], "choices": []domain.Object{{"finish_reason": "stop", "message": domain.Object{"content": "A clean product photograph"}}}, "usage": domain.Object{"prompt_tokens": 100, "completion_tokens": 20, "cost": json.Number("0.00002")}})
 	case r.URL.Path == "/pricing/estimate":
 		_, _ = w.Write([]byte(`{"currency":"USD","total_cost":0.003}`))
+	case r.URL.Path == "/billing-events":
+		m.billingChecks++
+		if r.URL.Query().Get("request_id") != "mock-fal-request" || r.URL.Query().Get("source") != "billed" {
+			w.WriteHeader(400)
+			return
+		}
+		if m.delayBilling {
+			_, _ = w.Write([]byte(`{"billing_events":[],"has_more":false}`))
+			return
+		}
+		_ = json.NewEncoder(w).Encode(domain.Object{"billing_events": []domain.Object{{"request_id": "mock-fal-request", "endpoint_id": r.URL.Query().Get("endpoint_id"), "cost_total": json.Number("0.0027")}}, "has_more": false})
 	case r.URL.Path == "/status":
 		if m.hold {
 			_, _ = w.Write([]byte(`{"status":"IN_PROGRESS"}`))
@@ -388,6 +401,7 @@ func testEngine(f *fixture, m *mockProvider) *engine.Engine {
 	cfg.OpenRouterURL = m.server.URL
 	cfg.FalURL = m.server.URL
 	cfg.FalPricingURL = m.server.URL + "/pricing"
+	cfg.FalBillingURL = m.server.URL + "/billing-events"
 	cfg.PollInterval = 20 * time.Millisecond
 	cfg.RetryBase = 20 * time.Millisecond
 	media := artifacts.New(cfg.ArtifactDir)

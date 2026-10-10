@@ -2,11 +2,15 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { api, ApiError, pollInterval, retryGet } from "./api";
 afterEach(() => vi.unstubAllGlobals());
 describe("dashboard requests", () => {
-  it("polls only active runs", () => {
+  it("polls active runs and then pending billing until accounting finishes", () => {
     expect(pollInterval("queued")).toBe(2000);
     expect(pollInterval("running")).toBe(2000);
     expect(pollInterval("failed")).toBe(false);
     expect(pollInterval("succeeded")).toBe(false);
+    expect(pollInterval("succeeded", "pending")).toBe(15000);
+    expect(pollInterval("failed", "pending")).toBe(15000);
+    expect(pollInterval("succeeded", "complete")).toBe(false);
+    expect(pollInterval("succeeded", "unavailable")).toBe(false);
   });
   it("retries a GET once for transient errors only", () => {
     expect(retryGet(0, new ApiError(503, "DB", "unavailable"))).toBe(true);
@@ -14,25 +18,23 @@ describe("dashboard requests", () => {
     expect(retryGet(0, new ApiError(422, "INVALID", "invalid"))).toBe(false);
   });
   it("preserves backend findings and makes a mutation only once", async () => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: false,
-        status: 422,
-        json: async () => ({
-          error: {
-            code: "VALIDATION_FAILED",
-            message: "bad graph",
-            findings: [
-              {
-                code: "CYCLE_DETECTED",
-                message: "cycle",
-                path: "/definition/edges",
-              },
-            ],
-          },
-        }),
-      });
+    const fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        error: {
+          code: "VALIDATION_FAILED",
+          message: "bad graph",
+          findings: [
+            {
+              code: "CYCLE_DETECTED",
+              message: "cycle",
+              path: "/definition/edges",
+            },
+          ],
+        },
+      }),
+    });
     vi.stubGlobal("fetch", fetch);
     try {
       await api("/workflows", { method: "POST", body: "{}" });

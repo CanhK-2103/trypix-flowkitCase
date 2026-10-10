@@ -10,6 +10,7 @@ Implement the approved PLAN.md. Explain decisions in Turkish; use English code i
 - Maximum three domain attempts per node, transient errors only; queue recovery is separate.
 - Run creation and River enqueue share one PostgreSQL transaction. Preserve idempotency and historical snapshots.
 - Costs use exact decimal arithmetic, unknown costs are null/partial; polling and restart do not create another charge.
+- Preserve the before-run estimate snapshot. Actual cost requires provider accounting for the exact request, never catalog/estimated price; actual totals stay null until all charges are known. Billing failures must not fail/resubmit generation.
 - JSON logs include run_id, node_id and attempt, including null context. Never log credentials.
 - Tests use local mock providers, pricing and media only. Run gofmt, go test ./..., go vet ./..., integration tests, frontend typecheck/build and sqlc regeneration checks.
 - Secrets only in ignored .env; never frontend/Git. Real tests are sequential, minimal, with fal $5 / OpenRouter $2 hard limits and planned $0.50 / $0.05 review thresholds.

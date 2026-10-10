@@ -48,8 +48,8 @@ export function retryGet(count: number, error: Error) {
 export function active(status?: string) {
   return status === "queued" || status === "running";
 }
-export function pollInterval(status?: string) {
-  return active(status) ? 2000 : false;
+export function pollInterval(status?: string, actualCostStatus?: string) {
+  return active(status) ? 2000 : actualCostStatus === "pending" ? 15000 : false;
 }
 export type Page<T> = { items: T[]; next_cursor: string };
 export async function allPages<T>(path: string): Promise<T[]> {

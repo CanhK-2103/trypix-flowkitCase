@@ -157,6 +157,37 @@ func (q *Queries) GetWorkflow(ctx context.Context, id pgtype.UUID) (GetWorkflowR
 	return i, err
 }
 
+const listBillingDue = `-- name: ListBillingDue :many
+SELECT r.id FROM runs r
+WHERE r.status IN ('succeeded','failed') AND EXISTS (
+ SELECT 1 FROM provider_requests p WHERE p.run_id=r.id
+ AND p.data->'cost'->>'actual_cost_usd' IS NULL
+ AND COALESCE(p.data->'cost'->>'actual_cost_status','pending') <> 'unavailable'
+ AND (p.data->'billing'->>'next_check_at' IS NULL OR (p.data->'billing'->>'next_check_at')::timestamptz<=now())
+)
+ORDER BY r.created_at LIMIT $1
+`
+
+func (q *Queries) ListBillingDue(ctx context.Context, limit int32) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listBillingDue, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listModels = `-- name: ListModels :many
 SELECT alias,data FROM models WHERE alias>$1::text AND ($2::boolean IS NULL OR enabled=$2) ORDER BY alias LIMIT $3
 `

@@ -19,8 +19,22 @@ export type Workflow = {
 export type Cost = {
   estimated_cost_usd: string | null;
   reported_cost_usd: string | null;
+  actual_cost_usd: string | null;
+  actual_cost_status: string;
+  actual_cost_source?: string;
   cost_status: string;
   pricing_source?: string;
+};
+export type Quote = {
+  workflow_revision: number;
+  created_at: string;
+  cost: Cost;
+  nodes: {
+    node_id: string;
+    model_id?: string;
+    cost: Cost;
+    assumptions: string[];
+  }[];
 };
 export type Failure = {
   code: string;
@@ -59,6 +73,12 @@ export type NodeRun = {
     provider_request_id?: string;
     cost: Cost;
     phase: string;
+    billing?: {
+      checks: number;
+      error?: Failure;
+      checked_at?: string;
+      next_check_at?: string;
+    };
   }[];
   error?: Failure;
   cost: Cost;
@@ -76,4 +96,5 @@ export type Run = {
   failed_node_id?: string;
   cost: Cost;
   input: Record<string, unknown>;
+  initial_estimate?: Quote;
 };

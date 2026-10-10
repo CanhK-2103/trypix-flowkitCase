@@ -25,3 +25,11 @@
 - Temiz checkout paketlemesini sürekli doğrulamak için CI'ya tam Compose kurulum kontrolü eklendi. Ücretli sağlayıcıya giden node içermeyen `input → output` workflow ile gerçek API/River worker ve idempotency kontrol edilir; bu run canlı AI kanıtı olarak sunulmaz.
 - OpenAPI üretim farkı CI'ya eklendi. Önceki CI'daki Node 20 action uyarısı için resmi [checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-go v7.0.0](https://github.com/actions/setup-go/releases/tag/v7.0.0), [setup-node v7.1.0](https://github.com/actions/setup-node/releases/tag/v7.1.0) etiketleri doğrulandı ve commit SHA'ları sabitlendi. Runner Ubuntu 24.04 olarak sabitlendi.
 - Plan kontrol listesi uygulanmış/test edilmiş maddeler ile canlı sağlayıcı bekleyen maddeleri ayıracak şekilde güncellendi.
+
+## 2026-10-11 — başlangıç tahmini ve gerçek toplam maliyet
+
+- Kullanıcı tahmini/gerçek adım ücretlerini, üretim öncesi tahmini toplamı ve üretim sonrası gerçek toplamı ayrı istedi. Önceki uygulamanın fal ücretini yalnızca tahmin ettiğini açıkça belirttikten sonra kapsam genişletildi.
+- Resmi fal Billing Events dokümanında source=billed ve request_id filtresi doğrulandı. Unit price × billable units gerçek tutar diye sunulmadı; indirim sonrası per-request cost_total kullanıldı. Billing erişimi için ek yetkiler gerektiği ve kayıt gecikmesinin olabileceği belgelenip unavailable/pending durumları uygulandı.
+- OR usage.cost yoksa generation metadata fallback eklendi. Başlangıç tahmini paid çağrı olmadan katalog/parametreler ve açık token varsayımı ile hesaplanır; run kabulündeki snapshot değişmez.
+- Gerçek toplamın önceki reported ara toplamından farklı olduğu kod/UI sözleşmesiyle ayrıldı: herhangi bir ücret eksikse actual total null olur. Mock testlerde gecikme, backoff, 403, pagination, kesin decimal, restart/refresh ve duplicate üretim olmaması doğrulandı; canlı ücret kanıtı üretildiği iddia edilmedi.
+- OpenAPI düzenlemesinde initial_estimate alanı ilk olarak NodeRun bölümüne eklendi; üretilen şema kontrolünde fark edilip Run bölümüne taşındı. Frontend typecheck/build, engine ve PostgreSQL testleri ayrı kontrol edildi.

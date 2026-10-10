@@ -8,19 +8,20 @@ import (
 
 func Money(s string) *string {
 	d, e := decimal.NewFromString(s)
-	if e != nil || d.IsNegative() {
+	if e != nil || d.IsNegative() || d.GreaterThan(decimal.RequireFromString("999999999999.999999999999")) {
 		return nil
 	}
 	out := d.StringFixed(12)
 	return &out
 }
 func ZeroCost() domain.Cost {
-	return domain.Cost{Estimated: Money("0"), Reported: Money("0"), Status: "complete", Source: "local"}
+	return domain.Cost{Estimated: Money("0"), Reported: Money("0"), Actual: Money("0"), ActualStatus: "complete", Status: "complete", Source: "local", ActualSource: "local"}
 }
 func SumCosts(costs []domain.Cost) domain.Cost {
-	estimate, reported := decimal.Zero, decimal.Zero
+	estimate, reported, actual := decimal.Zero, decimal.Zero, decimal.Zero
 	knownE, knownR := false, false
 	completeE := true
+	completeA, unavailableA, pendingA := true, false, false
 	for _, c := range costs {
 		if c.Estimated == nil {
 			completeE = false
@@ -34,11 +35,28 @@ func SumCosts(costs []domain.Cost) domain.Cost {
 			reported = reported.Add(d)
 			knownR = true
 		}
+		if c.Actual == nil || c.ActualStatus != "complete" {
+			completeA = false
+		} else {
+			d, _ := decimal.NewFromString(*c.Actual)
+			actual = actual.Add(d)
+		}
+		if c.ActualStatus == "unavailable" {
+			unavailableA = true
+		} else if c.Actual == nil || c.ActualStatus != "complete" {
+			pendingA = true
+		}
 		if c.Status == "partial" {
 			completeE = false
 		}
 	}
-	out := domain.Cost{Status: "complete"}
+	out := domain.Cost{Status: "complete", ActualStatus: "pending"}
+	if completeA {
+		out.Actual = Money(actual.String())
+		out.ActualStatus = "complete"
+	} else if unavailableA && !pendingA {
+		out.ActualStatus = "unavailable"
+	}
 	if knownE || len(costs) == 0 {
 		out.Estimated = Money(estimate.String())
 	}
@@ -54,6 +72,14 @@ func TokenCost(m domain.Model, usage domain.Object) domain.Cost {
 	out := domain.Cost{Status: "partial"}
 	if v, ok := usage["cost"]; ok {
 		out.Reported = Money(fmt.Sprint(v))
+		out.Actual = out.Reported
+		if out.Actual != nil {
+			out.ActualStatus = "complete"
+			out.ActualSource = "openrouter usage.cost"
+		}
+	}
+	if out.Actual == nil {
+		out.ActualStatus = "pending"
 	}
 	if m.Pricing == nil {
 		return out

@@ -68,9 +68,11 @@ func (s *Server) Handler() http.Handler {
 	r.Put("/workflows/{id}", s.updateWorkflow)
 	r.Delete("/workflows/{id}", s.deleteWorkflow)
 	r.Post("/workflows/{id}/runs", s.startRun)
+	r.Post("/workflows/{id}/estimate", s.estimateRun)
 	r.Get("/runs", s.listRuns)
 	r.Get("/runs/{id}", s.getRun)
 	r.Get("/runs/{id}/status", s.runStatus)
+	r.Post("/runs/{id}/costs/refresh", s.refreshCosts)
 	r.Get("/artifacts/{id}", s.artifact)
 	return r
 }
@@ -564,11 +566,14 @@ func (s *Server) startRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	run := domain.Run{ID: uuid.NewString(), Workflow: wf, Input: body.Input, Status: "queued", RequestID: requestID(r), Version: 1, CreatedAt: time.Now().UTC(), Nodes: []domain.NodeRun{}, Cost: domain.Cost{Status: "partial"}}
-	for _, node := range ordered {
+	quote := engine.QuoteWorkflow(wf, models, body.Input, run.CreatedAt)
+	run.InitialEstimate = &quote
+	run.Cost = quote.Cost
+	for i, node := range ordered {
 		nr := domain.NodeRun{Node: node, Status: "pending", Attempts: []domain.Attempt{}, Requests: []domain.ProviderRequest{}, Cost: engine.ZeroCost()}
 		if model, ok := models[node.ModelRef]; ok {
 			nr.Model = &model
-			nr.Cost = domain.Cost{Status: "partial"}
+			nr.Cost = quote.Nodes[i].Cost
 		}
 		run.Nodes = append(run.Nodes, nr)
 	}
@@ -594,7 +599,7 @@ func (s *Server) startRun(w http.ResponseWriter, r *http.Request) {
 }
 func runResponse(w http.ResponseWriter, status int, r domain.Run) {
 	w.Header().Set("Location", "/runs/"+r.ID)
-	send(w, status, domain.Object{"run_id": r.ID, "status": r.Status, "status_url": "/runs/" + r.ID + "/status", "detail_url": "/runs/" + r.ID})
+	send(w, status, domain.Object{"run_id": r.ID, "status": r.Status, "status_url": "/runs/" + r.ID + "/status", "detail_url": "/runs/" + r.ID, "initial_estimate": r.InitialEstimate})
 }
 func (s *Server) getRun(w http.ResponseWriter, r *http.Request) {
 	if !validID(w, r, s) {

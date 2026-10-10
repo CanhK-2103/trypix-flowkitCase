@@ -109,10 +109,39 @@ const schemas = {
     {
       estimated_cost_usd: money,
       reported_cost_usd: money,
+      actual_cost_usd: money,
+      actual_cost_status: { enum: ["complete", "pending", "unavailable"] },
+      actual_cost_source: str,
       cost_status: { enum: ["complete", "partial"] },
       pricing_source: str,
     },
-    ["estimated_cost_usd", "reported_cost_usd", "cost_status"],
+    [
+      "estimated_cost_usd",
+      "reported_cost_usd",
+      "actual_cost_usd",
+      "actual_cost_status",
+      "cost_status",
+    ],
+  ),
+  Quote: object(
+    {
+      workflow_revision: { type: "integer" },
+      created_at: time,
+      cost: ref("Cost"),
+      nodes: {
+        type: "array",
+        items: object(
+          {
+            node_id: str,
+            model_id: str,
+            cost: ref("Cost"),
+            assumptions: { type: "array", items: str },
+          },
+          ["node_id", "cost", "assumptions"],
+        ),
+      },
+    },
+    ["workflow_revision", "created_at", "cost", "nodes"],
   ),
   StartRun: object({ input: anyObject }, ["input"]),
   AcceptedRun: object(
@@ -121,6 +150,7 @@ const schemas = {
       status: { enum: ["queued", "running", "succeeded", "failed"] },
       status_url: str,
       detail_url: str,
+      initial_estimate: { anyOf: [ref("Quote"), { type: "null" }] },
     },
     ["run_id", "status", "status_url", "detail_url"],
   ),
@@ -163,6 +193,7 @@ const schemas = {
       error: ref("Failure"),
       output: anyObject,
       cost: ref("Cost"),
+      initial_estimate: ref("Quote"),
     },
     [
       "run_id",
@@ -300,6 +331,15 @@ const paths = {
       ],
     ),
   },
+  "/workflows/{id}/estimate": {
+    post: operation(
+      "Estimate per-node and total cost without generation; incomplete inputs/prices return partial",
+      200,
+      "Quote",
+      "StartRun",
+      [pathParam("id", "uuid")],
+    ),
+  },
   "/runs": {
     get: operation("List runs", 200, "Runs", null, [
       ...page,
@@ -324,6 +364,15 @@ const paths = {
     get: operation("Get run status", 200, "RunStatus", null, [
       pathParam("id", "uuid"),
     ]),
+  },
+  "/runs/{id}/costs/refresh": {
+    post: operation(
+      "Schedule accounting reads for a finished run; does not generate again",
+      202,
+      "Run",
+      null,
+      [pathParam("id", "uuid")],
+    ),
   },
   "/artifacts/{id}": {
     get: {

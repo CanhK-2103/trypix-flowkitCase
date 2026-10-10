@@ -46,3 +46,13 @@ INSERT INTO provider_requests(id,run_id,node_id,provider_request_id,phase,estima
 INSERT INTO artifacts(id,run_id,filename,data) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET filename=EXCLUDED.filename,data=EXCLUDED.data;
 -- name: GetArtifact :one
 SELECT filename,data FROM artifacts WHERE id=$1;
+
+-- name: ListBillingDue :many
+SELECT r.id FROM runs r
+WHERE r.status IN ('succeeded','failed') AND EXISTS (
+ SELECT 1 FROM provider_requests p WHERE p.run_id=r.id
+ AND p.data->'cost'->>'actual_cost_usd' IS NULL
+ AND COALESCE(p.data->'cost'->>'actual_cost_status','pending') <> 'unavailable'
+ AND (p.data->'billing'->>'next_check_at' IS NULL OR (p.data->'billing'->>'next_check_at')::timestamptz<=now())
+)
+ORDER BY r.created_at LIMIT $1;

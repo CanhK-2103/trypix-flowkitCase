@@ -25,6 +25,15 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 - Gerçek API ve River worker üzerinde sağlayıcısız `input → output` run'ı tamamlandı. Aynı idempotency key ile replay aynı run'ı verdi. Her iki node succeeded, provider request sayısı 0, maliyet `0.000000000000` ve cost_status complete.
 - Bu kontrol `tools/check-compose.mjs` ile CI'ya eklendi. Bu run AI üretimi değildir; aşağıdaki canlı kanıtların yerine geçmez.
 
+## 11 Ekim 2026 — başlangıç tahmini ve gerçek maliyet ek kapsamı
+
+- `/workflows/{id}/estimate` üretimden önce node ve toplam tahmini döndürüyor; run/provider çağrısı oluşturmadığı PostgreSQL + local HTTP fixture testinde doğrulandı. Başlangıç tahmini run snapshot'ında korunuyor.
+- Fal billed-event isteği request ID, endpoint ID ve source=billed filtrelerini gönderiyor; pagination, indirim sonrası tutar, nano USD, zero gerçek ücret, eksik/malformed kayıt, farklı request ID ve 403/503 yolları local mock ile testli. OpenRouter generation fallback exact decimal tutarı testli.
+- Gerçek toplam ücret kaydı eksikken null/pending. Geciken fal kaydı ve sonraki API refresh/reconciliation sonrasında gerçek toplam `0.002720000000`, fal `0.002700000000`, OpenRouter `0.000020000000` olarak DB'de doğrulandı; bunlar **mock tutarlarıdır**. Submit/LLM sayıları birer kaldı; tekrar uzlaştırma double-charge oluşturmadı.
+- Billing yetki hatası successful run'ı değiştirmedi; erişim düzeltildikten sonra refresh çalıştı. Geçici 5xx backoff, 24 saatlik bekleme sınırı, DB checkpoint'ten devam etme ve başlangıç tahmininin korunması engine testleriyle doğrulandı.
+- Frontend sekiz test, typecheck/build; tam Go/PostgreSQL entegrasyon testleri, go vet ve sqlc tekrar üretim kontrolü geçti. Docker Compose yeniden build ile sağlıklı başladı; gateway/gerçek worker üzerinde ücretsiz input→output smoke kontrolü geçti.
+- Gerçek fal billing key yetkileri ve canlı faturalama tutarları henüz doğrulanmadı; anahtar girişi kullanıcı isteğiyle en sona bırakıldı.
+
 ## Henüz doğrulanmamış canlı kabul
 
 - Gerçek doğrudan OpenRouter → fal denemesi.

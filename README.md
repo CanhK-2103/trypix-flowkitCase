@@ -43,7 +43,7 @@ API run, immutable workflow/model snapshot'ları ve River job'ını **aynı Post
 
 Worker `sending → waiting_provider → fetch_result → result_saved → succeeded` fazlarını transaction ile kaydeder. Fal request ID ve dönen status/result URL'leri **submit'ten hemen sonra, polling/fiyat/indirme öncesinde** commit edilir. `JobSnooze` polling/retry beklemelerinde worker slotunu serbest bırakır. Üretilen görseller 20 MiB sınırı, MIME kontrolü ve atomik dosya taşıma ile kalıcı volume'a alınır; provider URL'sinin ömrüne bağımlı değildir.
 
-TanStack Query aktif run detayını 2 saniyede bir yeniler, terminal durumda durur. Mutation otomatik retry yapmaz. CodeMirror sözdizimi hatalarını gösterir; semantik kurallar her kaydetmede backend'de uygulanır.
+TanStack Query aktif run detayını 2 saniyede bir yeniler; üretim bittikten sonra ücret kaydı bekleniyorsa 15 saniyede bir maliyeti yeniler, ücret doğrulanınca veya erişilemiyorsa durur. Mutation otomatik retry yapmaz. CodeMirror sözdizimi hatalarını gösterir; semantik kurallar her kaydetmede backend'de uygulanır.
 
 ## API
 
@@ -55,9 +55,11 @@ TanStack Query aktif run detayını 2 saniyede bir yeniler, terminal durumda dur
 | GET / PUT / DELETE | `/workflows/{id}` | Detay / doğrulanmış güncelleme / soft-delete |
 | POST | `/workflows/validate` | Kaydetmeden `{valid, findings}` |
 | POST | `/workflows/{id}/runs` | Asenkron run; optional Idempotency-Key |
+| POST | `/workflows/{id}/estimate` | Üretim çağırmadan node ve toplam başlangıç tahmini |
 | GET | `/runs` | Geçmiş; workflow_id/status filtreleri |
 | GET | `/runs/{id}/status` | Hafif durum |
 | GET | `/runs/{id}` | Snapshot, node/attempt izi, hata, çıktı, maliyet |
+| POST | `/runs/{id}/costs/refresh` | Bitmiş run'ın eksik ücret kayıtlarını yeniden sorgulamayı planla |
 | GET | `/artifacts/{id}` | Kalıcı görsel |
 | GET | `/health/live`, `/health/ready` | Canlılık / DB ve migration hazırlığı |
 
@@ -90,7 +92,23 @@ Portlar: input `text`; llm giriş `text` veya `prompt`, çıkış `prompt`; imag
 - HTTP timeout 30 sn; kalıcı node deadline LLM 120 sn / image 600 sn; retry/restart süreyi sıfırlamaz. Fal'ın kendi retry ve model fallback'i kapalıdır. Run'ın River altyapı retry'si domain attempt'ten ayrıdır; terminal queue hatası uzlaştırılır.
 - **Restart:** kayıtlı fal ID varsa aynı istek poll edilir; sonuç kaydedilmişse artifact fazı devam eder. Provider kabulü ile DB commit atomik olamaz: `sending` var fakat durable ID/cevap yoksa `PROVIDER_SUBMISSION_UNKNOWN`, kör resubmit yok. [Zorla process kapatma testi](internal/integration/integration_test.go) bu kritik commit sonrası aralığı doğrular.
 - **Idempotency:** aynı key + workflow/input → aynı run (200); farklı body → 409. Key global scope ve run ömrü boyunca saklanır. Replay, güncel workflow doğrulamasından önce gelir; sonradan silinse bile eski run döner. 10 eşzamanlı istek için bir run/job testi vardır.
-- **Maliyet:** request ledger ve fiyat snapshot'ı; NUMERIC(24,12) / decimal string. OpenRouter token kullanımından tahmin ve `usage.cost` ayrı saklanır; upstream cost eklenmez. Fal historical estimate API bir endpoint / bir çağrı tahmini verir; alınamazsa katalog fiyatı ve gerçek boyutla hesap yapılır. Bilinmeyen tutar null/partial; bilinen ara toplam gösterilir. Polling/restart ikinci maliyet üretmez; yeni gerçek üretim retry'si ayrı kayıt olur. Fal tutarı fatura değil tahmindir.
+- **Maliyet:** request ledger ve fiyat snapshot'ı; NUMERIC(24,12) / decimal string. Başlangıç tahmini, çalıştırma tahmini ve gerçek ücret ayrı tutulur. Polling/restart ikinci maliyet üretmez; yeni üretim retry'si ayrı kayıt olur. Ayrıntılar aşağıda.
+
+## Başlangıç tahmini ve gerçek maliyet
+
+Dashboard girdi formunda, başlatmadan önce node'ların fiyatları ve **başlangıç tahmini toplam** görünür. `/estimate` ücretli üretim veya sağlayıcı fiyat çağrısı yapmaz: katalog fiyatı, seçilen görsel boyutu ve LLM için yaklaşık 4 karakter/token + 16 mesaj tokenı ile `max_completion_tokens` çıktı rezervi kullanır. Bu kesin bir üst sınır değildir; retry ve önbellek indirimleri tahmine dahil değildir. Eksik girdi/fiyat `null/partial` döner. Run kabul edilirken o anki snapshot'tan tekrar hesaplanan `initial_estimate` kalıcıdır; sonradan fiyat veya workflow değişince eski tahmin değişmez.
+
+Run detayında her node ve sağlayıcı isteği için tahmini ve gerçek maliyet ayrı gösterilir. Çalıştırma tahmini gerçek token kullanımı / fal historical estimate ile güncellenebilir; başlangıç tahmini korunur. **Gerçek toplam**, tüm sağlayıcı isteklerinin ücretleri bilindiğinde `actual_cost_usd` olarak hesaplanır. Eksik ücret varken bu alan `null`, `actual_cost_status=pending/unavailable` olur; kısmi ücretler gerçek toplam diye gösterilmez. `reported_cost_usd` yalnızca eldeki raporların ara toplamıdır. Yerel input/output ücretsizdir; belirsiz gönderim veya ücreti doğrulanamayan istek sıfır sayılmaz.
+
+OpenRouter `usage.cost` gerçek ücret olarak kaydedilir; yoksa aynı generation ID için [Generation API](https://openrouter.ai/docs/api/api-reference/generations/get-generation) `total_cost` okunur. Fal için [Billing Events API](https://fal.ai/docs/platform-apis/v1/models/billing-events) `source=billed`, `request_id` ve `endpoint_id` ile sorgulanır; indirim sonrası `cost_total` kullanılır. Liste sayfaları tamamlanmadan toplam kesinleştirilmez. Workspace toplamı, birim fiyat × billable units veya tahmin hiçbir zaman gerçek ücret yerine kullanılmaz. Sağlayıcının o isteğe ait ücret kaydı saklanır; bu tutar vergi içeren aylık fatura değildir.
+
+Worker üretim tamamlandıktan sonra eksik ücretleri arka planda kontrol eder: 30 sn → 2 dk → 10 dk → 1 saat bekleme; en fazla 24 saat. Kontrol sayısı/zamanı, hata ve ücret yanıtı DB'de saklanır, restart devam eder. Billing hatası başarılı üretimi başarısız yapmaz. Yetki hatasında sürekli sorgu yerine “Doğrulanamadı” görünür; izin düzeltildikten sonra dashboard/API üzerinden maliyet yenilenebilir. Fal billing için `billing:usage:read`, `auth:keys:read`, `account:users:read` yetkileri gerekir (`BILLING` veya `FULL` preset). İstenirse `.env` içindeki **FAL_BILLING_KEY** ayrı tutulur; boşsa FAL_KEY kullanılır. Anahtarlar frontend'e gönderilmez.
+
+```sh
+curl -X POST http://localhost:8080/workflows/10000000-0000-4000-8000-000000000001/estimate \
+  -H 'Content-Type: application/json' -d '{"input":{"description":"Blue ceramic cup"}}'
+curl -X POST http://localhost:8080/runs/RUN_ID/costs/refresh
+```
 
 ## İlk doğrudan akış → FlowKit
 
@@ -154,4 +172,4 @@ Luna kısa metin için düşük maliyet; Schnell hızlı/ucuz; Dev aynı paramet
 
 Codex planlama, uygulama, test ve dokümantasyonda kullanıldı. [AGENTS.md](AGENTS.md) değişmez kuralları, [AI_LOG.md](docs/AI_LOG.md) gerçek karar/hata/düzeltmeleri içerir. Örneğin ilk max_tokens örneği API dokümanında deprecated olduğu görülerek düzeltildi; River default checkpoint'i tek başına yeterli sanılmayıp DB commit sınırı incelendi. Kodun kritik transaction/retry/recovery davranışları mock + PostgreSQL ve gerçek worker process testleriyle doğrulandı.
 
-Bir hafta daha olsaydı çoklu host için object storage, provider submission belirsizliğini azaltacak sağlayıcı destekli idempotency/ücret mutabakatı, operasyonel metrics/traces ve genişletilebilir profile şemalarına öncelik verirdim. Yerel volume, tek host ve kapsamı sınırlı maliyet tahmini bu teslimin bilinçli sınırlarıdır.
+Bir hafta daha olsaydı çoklu host için object storage, provider submission belirsizliğini azaltacak sağlayıcı destekli idempotency, otomatik fiyat güncelleme ve hesap ölçeğinde maliyet raporları, operasyonel metrics/traces ve genişletilebilir profile şemalarına öncelik verirdim. Yerel volume, tek host ve sağlayıcı ücret kaydının erişimine/zamanına bağımlılık bu teslimin bilinçli sınırlarıdır.

@@ -921,6 +921,94 @@
         }
       }
     },
+    "/workflows/{id}/estimate": {
+      "post": {
+        "summary": "Estimate per-node and total cost without generation; incomplete inputs/prices return partial",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRun"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Quote"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/runs": {
       "get": {
         "summary": "List runs",
@@ -1126,6 +1214,84 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RunStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Typed error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/costs/refresh": {
+      "post": {
+        "summary": "Schedule accounting reads for a finished run; does not generate again",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
                 }
               }
             }
@@ -1761,6 +1927,23 @@
             ],
             "pattern": "^[0-9]+\\.[0-9]{12}$"
           },
+          "actual_cost_usd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9]+\\.[0-9]{12}$"
+          },
+          "actual_cost_status": {
+            "enum": [
+              "complete",
+              "pending",
+              "unavailable"
+            ]
+          },
+          "actual_cost_source": {
+            "type": "string"
+          },
           "cost_status": {
             "enum": [
               "complete",
@@ -1774,7 +1957,60 @@
         "required": [
           "estimated_cost_usd",
           "reported_cost_usd",
+          "actual_cost_usd",
+          "actual_cost_status",
           "cost_status"
+        ],
+        "additionalProperties": false
+      },
+      "Quote": {
+        "type": "object",
+        "properties": {
+          "workflow_revision": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/Cost"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node_id": {
+                  "type": "string"
+                },
+                "model_id": {
+                  "type": "string"
+                },
+                "cost": {
+                  "$ref": "#/components/schemas/Cost"
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "node_id",
+                "cost",
+                "assumptions"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "workflow_revision",
+          "created_at",
+          "cost",
+          "nodes"
         ],
         "additionalProperties": false
       },
@@ -1811,6 +2047,16 @@
           },
           "detail_url": {
             "type": "string"
+          },
+          "initial_estimate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quote"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1989,6 +2235,9 @@
           },
           "cost": {
             "$ref": "#/components/schemas/Cost"
+          },
+          "initial_estimate": {
+            "$ref": "#/components/schemas/Quote"
           }
         },
         "required": [

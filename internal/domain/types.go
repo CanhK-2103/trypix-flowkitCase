@@ -96,10 +96,32 @@ type Failure struct {
 func (f *Failure) Error() string { return fmt.Sprintf("%s: %s", f.Code, f.Message) }
 
 type Cost struct {
-	Estimated *string `json:"estimated_cost_usd"`
-	Reported  *string `json:"reported_cost_usd"`
-	Status    string  `json:"cost_status"`
-	Source    string  `json:"pricing_source,omitempty"`
+	Estimated    *string `json:"estimated_cost_usd"`
+	Reported     *string `json:"reported_cost_usd"`
+	Actual       *string `json:"actual_cost_usd"`
+	ActualStatus string  `json:"actual_cost_status"`
+	ActualSource string  `json:"actual_cost_source,omitempty"`
+	Status       string  `json:"cost_status"`
+	Source       string  `json:"pricing_source,omitempty"`
+}
+type QuoteNode struct {
+	NodeID      string   `json:"node_id"`
+	ModelID     string   `json:"model_id,omitempty"`
+	Cost        Cost     `json:"cost"`
+	Assumptions []string `json:"assumptions"`
+}
+type Quote struct {
+	WorkflowRevision int         `json:"workflow_revision"`
+	CreatedAt        time.Time   `json:"created_at"`
+	Nodes            []QuoteNode `json:"nodes"`
+	Cost             Cost        `json:"cost"`
+}
+type Billing struct {
+	Attempts    int             `json:"checks"`
+	NextCheckAt *time.Time      `json:"next_check_at,omitempty"`
+	CheckedAt   *time.Time      `json:"checked_at,omitempty"`
+	Error       *Failure        `json:"error,omitempty"`
+	Raw         json.RawMessage `json:"response,omitempty"`
 }
 type ProviderRequest struct {
 	ID                string          `json:"id"`
@@ -115,6 +137,7 @@ type ProviderRequest struct {
 	Usage             Object          `json:"usage,omitempty"`
 	Pricing           *Pricing        `json:"pricing_snapshot,omitempty"`
 	Cost              Cost            `json:"cost"`
+	Billing           Billing         `json:"billing"`
 	CreatedAt         time.Time       `json:"created_at"`
 	FinishedAt        *time.Time      `json:"finished_at,omitempty"`
 }
@@ -145,23 +168,24 @@ type NodeRun struct {
 	Cost           Cost              `json:"cost"`
 }
 type Run struct {
-	ID           string     `json:"run_id"`
-	Workflow     Workflow   `json:"workflow_snapshot"`
-	Input        Object     `json:"input"`
-	Status       string     `json:"status"`
-	RequestID    string     `json:"request_id"`
-	JobID        int64      `json:"job_id"`
-	Version      int64      `json:"version"`
-	CreatedAt    time.Time  `json:"created_at"`
-	StartedAt    *time.Time `json:"started_at,omitempty"`
-	FinishedAt   *time.Time `json:"finished_at,omitempty"`
-	QueueWaitMS  int64      `json:"queue_wait_ms"`
-	DurationMS   int64      `json:"duration_ms"`
-	Nodes        []NodeRun  `json:"nodes"`
-	FailedNodeID string     `json:"failed_node_id,omitempty"`
-	Error        *Failure   `json:"error,omitempty"`
-	Output       Object     `json:"output,omitempty"`
-	Cost         Cost       `json:"cost"`
+	ID              string     `json:"run_id"`
+	Workflow        Workflow   `json:"workflow_snapshot"`
+	Input           Object     `json:"input"`
+	Status          string     `json:"status"`
+	RequestID       string     `json:"request_id"`
+	JobID           int64      `json:"job_id"`
+	Version         int64      `json:"version"`
+	CreatedAt       time.Time  `json:"created_at"`
+	StartedAt       *time.Time `json:"started_at,omitempty"`
+	FinishedAt      *time.Time `json:"finished_at,omitempty"`
+	QueueWaitMS     int64      `json:"queue_wait_ms"`
+	DurationMS      int64      `json:"duration_ms"`
+	Nodes           []NodeRun  `json:"nodes"`
+	FailedNodeID    string     `json:"failed_node_id,omitempty"`
+	Error           *Failure   `json:"error,omitempty"`
+	Output          Object     `json:"output,omitempty"`
+	Cost            Cost       `json:"cost"`
+	InitialEstimate *Quote     `json:"initial_estimate,omitempty"`
 }
 
 func (r *Run) Terminal() bool { return r.Status == "succeeded" || r.Status == "failed" }

@@ -18,6 +18,7 @@ import {
   type Page,
 } from "./api";
 import type { Run, Workflow } from "./types";
+import { Money, ActualMoney, QuotePanel, RunCosts } from "./Costs";
 import "./style.css";
 const JsonEditor = lazy(() =>
   import("./JsonEditor").then((module) => ({ default: module.JsonEditor })),
@@ -56,9 +57,6 @@ const empty: Workflow = {
 };
 const format = (v: unknown) => JSON.stringify(v, null, 2);
 const short = (id: string) => id.slice(0, 8);
-function Money({ value }: { value: string | null | undefined }) {
-  return <>{value == null ? "Bilinmiyor" : `$${Number(value).toFixed(6)}`}</>;
-}
 function Badge({ status }: { status: string }) {
   return (
     <span className={`badge ${status}`}>
@@ -186,7 +184,11 @@ function App() {
     queryKey: ["run", runID],
     queryFn: () => api<Run>(`/runs/${runID}`),
     enabled: !!runID,
-    refetchInterval: (query) => pollInterval(query.state.data?.status),
+    refetchInterval: (query) =>
+      pollInterval(
+        query.state.data?.status,
+        query.state.data?.cost.actual_cost_status,
+      ),
   });
   const history = useQuery({
     queryKey: ["runs", selected],
@@ -477,6 +479,11 @@ function App() {
                           ),
                         )}
                         <ErrorBox error={run.error} />
+                        <QuotePanel
+                          workflowID={selected}
+                          revision={selectedWorkflow.revision}
+                          input={values}
+                        />
                         <button
                           className="button primary full"
                           disabled={run.isPending}
@@ -574,6 +581,14 @@ function App() {
   );
 }
 function RunDetail({ run }: { run: Run }) {
+  const qc = useQueryClient();
+  const refresh = useMutation({
+    mutationFn: () =>
+      api<Run>(`/runs/${run.run_id}/costs/refresh`, { method: "POST" }),
+    onSuccess: (updated) => {
+      qc.setQueryData(["run", run.run_id], updated);
+    },
+  });
   const image = run.output?.image;
   return (
     <div className="panel detail-panel">
@@ -599,24 +614,46 @@ function RunDetail({ run }: { run: Run }) {
           <strong>{(run.queue_wait_ms / 1000).toFixed(2)} sn</strong>
         </div>
         <div>
-          <span>TAHMİNİ MALİYET</span>
+          <span>BAŞLANGIÇ TAHMİNİ TOPLAM</span>
           <strong>
-            <Money value={run.cost.estimated_cost_usd} />
+            <Money value={run.initial_estimate?.cost.estimated_cost_usd} />
           </strong>
           <small>
-            {run.cost.cost_status === "partial"
+            {run.initial_estimate?.cost.cost_status === "partial"
               ? "Kısmi · bilinmeyen maliyet var"
-              : "USD · sağlayıcı tahmini"}
+              : "USD · üretim öncesi tahmin"}
           </small>
         </div>
         <div>
-          <span>BİLDİRİLEN MALİYET</span>
+          <span>GERÇEK TOPLAM MALİYET</span>
           <strong>
-            <Money value={run.cost.reported_cost_usd} />
+            <ActualMoney cost={run.cost} />
           </strong>
-          <small>Mevcut sağlayıcı raporlarının toplamı</small>
+          <small>
+            {run.cost.actual_cost_status === "complete"
+              ? "USD · tüm sağlayıcı ücretleri doğrulandı"
+              : "Sağlayıcıların ücret kayıtları tamamlanınca hesaplanır"}
+          </small>
         </div>
       </div>
+      <div className="billing-summary">
+        <span>
+          Çalıştırma tahmini: <Money value={run.cost.estimated_cost_usd} /> ·
+          Mevcut ücret kayıtları: <Money value={run.cost.reported_cost_usd} />{" "}
+          (eksik olabilir)
+        </span>
+        {!active(run.status) && run.cost.actual_cost_status !== "complete" && (
+          <button
+            className="button ghost"
+            disabled={refresh.isPending}
+            onClick={() => refresh.mutate()}
+          >
+            {refresh.isPending ? "İsteniyor…" : "Maliyet kaydını yenile"}
+          </button>
+        )}
+      </div>
+      <ErrorBox error={refresh.error} />
+      {run.nodes.some((n) => n.node.modelRef) && <RunCosts run={run} />}
       {run.error && (
         <div className="notice error">
           <strong>
@@ -654,7 +691,7 @@ function RunDetail({ run }: { run: Run }) {
                   Tahmini: <Money value={n.cost.estimated_cost_usd} />
                 </span>
                 <span>
-                  Bildirilen: <Money value={n.cost.reported_cost_usd} />
+                  Gerçek: <ActualMoney cost={n.cost} />
                 </span>
               </div>
               {n.rendered_prompt && (
@@ -683,6 +720,16 @@ function RunDetail({ run }: { run: Run }) {
                   <span>
                     {p.actual_model_id ?? p.requested_model_id} · {p.phase}
                   </span>
+                  <span>
+                    Tahmini: <Money value={p.cost.estimated_cost_usd} /> ·
+                    Gerçek: <ActualMoney cost={p.cost} />
+                  </span>
+                  {p.billing?.error && (
+                    <span className="danger">
+                      Maliyet: {p.billing.error.code} ·{" "}
+                      {p.billing.error.message}
+                    </span>
+                  )}
                 </div>
               ))}
               <h3>Girdi / çıktı</h3>

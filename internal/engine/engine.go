@@ -52,10 +52,16 @@ func (e *Engine) save(ctx context.Context, r *domain.Run) error {
 		n := &r.Nodes[i]
 		if len(n.Requests) > 0 {
 			parts := []domain.Cost{}
-			for _, q := range n.Requests {
+			for qi := range n.Requests {
+				q := &n.Requests[qi]
+				if q.Cost.ActualStatus == "" {
+					q.Cost.ActualStatus = "pending"
+				}
 				parts = append(parts, q.Cost)
 			}
 			n.Cost = SumCosts(parts)
+		} else if r.Terminal() {
+			n.Cost = ZeroCost()
 		}
 		costs = append(costs, n.Cost)
 	}
@@ -302,6 +308,7 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 			return e.providerFailure(ctx, r, idx, f, false)
 		}
 		q.Raw = result.Raw
+		q.Usage = domain.Object{"billable_units": result.BillableUnits}
 		q.Phase = "result_saved"
 		n.Output = domain.Object{"source_url": result.URL, "width": result.Width, "height": result.Height}
 		if q.Cost.Estimated == nil {

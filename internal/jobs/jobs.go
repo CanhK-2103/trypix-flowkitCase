@@ -52,6 +52,9 @@ func Reconcile(ctx context.Context, s *storage.Store, e *engine.Engine, log *slo
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			if err := ReconcileBilling(ctx, s, e); err != nil {
+				log.Error("Billing reconciliation failed", "event", "billing.reconcile_error", "error", err.Error())
+			}
 			// River owns its schema. This read-only integration query detects jobs that its maintenance discarded.
 			rows, err := s.Pool.Query(ctx, "SELECT r.data FROM runs r JOIN river_job j ON j.id=(r.data->>'job_id')::bigint WHERE r.status IN ('queued','running') AND j.state IN ('discarded','cancelled') LIMIT 100")
 			if err != nil {
@@ -76,4 +79,21 @@ func Reconcile(ctx context.Context, s *storage.Store, e *engine.Engine, log *slo
 			}
 		}
 	}
+}
+
+// Due checks are persisted in each request. Multiple workers may read the same
+// accounting record, but optimistic checkpoints prevent overwriting newer data.
+func ReconcileBilling(ctx context.Context, s *storage.Store, e *engine.Engine) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	rows, err := s.Q.ListBillingDue(ctx, 25)
+	if err != nil {
+		return err
+	}
+	for _, id := range rows {
+		if err := e.ReconcileCosts(ctx, id.String()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
