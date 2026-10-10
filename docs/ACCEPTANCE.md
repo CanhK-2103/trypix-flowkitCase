@@ -18,6 +18,13 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 - API/worker/init/bootstrap çıktılarındaki 1157 satır parse edildi; JSON olmayan veya run_id/node_id/attempt alanı eksik satır sayısı 0. Ayrıca logger context alanlarının duplicate/null ile ezilmediği test edildi.
 - sqlc 1.31.1 tekrar üretiminde generated dosyaların hash'leri değişmedi; go vet geçti. Frontend production dependency audit 0 açık bildirdi.
 
+## 11 Ekim 2026 — anahtarsız temiz paket kontrolü
+
+- Ayrı `flowkit-package-check` Compose projesi yeni volume'larla `up --build --detach --wait` kullanılarak açıldı; normal çalışma ortamı korunarak kontrol edildi.
+- Gateway üzerinden API ready, derlenmiş dashboard JavaScript dosyası, 3 enabled model ve 2 örnek workflow doğrulandı; iki örneğin standalone validate sonucu geçerliydi.
+- Gerçek API ve River worker üzerinde sağlayıcısız `input → output` run'ı tamamlandı. Aynı idempotency key ile replay aynı run'ı verdi. Her iki node succeeded, provider request sayısı 0, maliyet `0.000000000000` ve cost_status complete.
+- Bu kontrol `tools/check-compose.mjs` ile CI'ya eklendi. Bu run AI üretimi değildir; aşağıdaki canlı kanıtların yerine geçmez.
+
 ## Henüz doğrulanmamış canlı kabul
 
 - Gerçek doğrudan OpenRouter → fal denemesi.
@@ -26,4 +33,4 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 - İkinci workflow'un gerçek Dev run'ı.
 - Gerçek sağlayıcı harcamaları ve fiyat snapshot'ları.
 
-Başlangıçta yerel API anahtarları yoktu. Anahtarlar hazır olunca `cmd/direct` ve `cmd/acceptance` çalıştırılır; çıktılar run/request kimlikleriyle bu dosyaya eklenir. Mock kanıtı gerçek üretim kanıtı olarak sunulmaz.
+Başlangıçta yerel API anahtarları yoktu. Kullanıcının 11 Ekim 2026 isteğiyle anahtarların girilmesi ve canlı kabul en sona bırakıldı. Anahtarlar hazır olunca `cmd/direct` ve `cmd/acceptance` çalıştırılır; çıktılar run/request kimlikleriyle bu dosyaya eklenir. Mock kanıtı gerçek üretim kanıtı olarak sunulmaz.

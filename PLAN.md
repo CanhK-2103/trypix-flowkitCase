@@ -624,30 +624,32 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 
 ## 20. Teslim kabul kontrol listesi
 
-- [ ] .env.example ve docker compose up ile temiz ortamda bütün servisler/dashboard çalışıyor.
-- [ ] Normal kurulum iki workflow/farklı görsel modeli hazırlıyor; API örnek yükleyici üretim çağırmıyor ve mevcut düzenlemeleri/silme işlemlerini koruyor.
-- [ ] Katalog, workflow CRUD/validate ve run API'leri OpenAPI/curl ile belgeli.
-- [ ] sqlc sürümü sabit, generated kod repoda ve yeniden üretim farkı yok; JSONB/UUID/UTC/null/decimal eşlemeleri doğrulanmış.
-- [ ] Kaydetme ve güncelleme bütün zorunlu doğrulama kurallarını uyguluyor; bulgu listesi anlaşılır.
-- [ ] Run POST sağlayıcıyı beklemeden dönüyor; job ve run atomik kaydoluyor.
-- [ ] fal queue submit/status/result kullanılıyor; request_id ilk poll öncesinde kalıcı.
-- [ ] Geçici hatalar en fazla 3 node attempt; kalıcı hata doğru node/kod ile kaydoluyor.
-- [ ] Worker restart bilinen fal isteğini tekrar göndermeden tamamlıyor; test kanıtı var.
-- [ ] Idempotency eşzamanlı tekrarda tek run/job; payload conflict açık.
-- [ ] Tahmini maliyet node/run detayında; fiyat snapshot, dedup ve partial doğru.
-- [ ] Uygulama logları JSON ve run_id/node_id/attempt içeriyor; provider hataları error seviyesinde; DEBUG ayrıntıları, retry/recovery korelasyonu ve secret temizliği doğrulanmış.
-- [ ] Dashboard gerçek üretici modelini ve adım/deneme/süre/hata bilgilerini gösteriyor.
-- [ ] TanStack Query aktif run'ı poll ediyor, terminal durumda duruyor; ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
-- [ ] CodeMirror JSON sözdizimi hatalarını ve API bulgularını gösteriyor; backend kaydetme doğrulaması zorunlu, kaydedilmemiş metin query yenilemesinde korunuyor.
+İşaretli maddeler uygulama ve ücretsiz test kanıtıdır. Gerçek sağlayıcı doğrulaması ayrı, açık kalan maddelerde tutulur; ayrıntılı kanıtlar docs/ACCEPTANCE.md'dedir.
+
+- [x] .env.example ve docker compose up ile temiz ortamda bütün servisler/dashboard çalışıyor.
+- [x] Normal kurulum iki workflow/farklı görsel modeli hazırlıyor; API örnek yükleyici üretim çağırmıyor ve mevcut düzenlemeleri/silme işlemlerini koruyor.
+- [x] Katalog, workflow CRUD/validate ve run API'leri OpenAPI/curl ile belgeli.
+- [x] sqlc sürümü sabit, generated kod repoda ve yeniden üretim farkı yok; JSONB/UUID/UTC/null/decimal eşlemeleri doğrulanmış.
+- [x] Kaydetme ve güncelleme bütün zorunlu doğrulama kurallarını uyguluyor; bulgu listesi anlaşılır.
+- [x] Run POST sağlayıcıyı beklemeden dönüyor; job ve run atomik kaydoluyor.
+- [x] fal queue submit/status/result sözleşmesi mock HTTP ile testli; request_id ilk poll öncesinde kalıcı.
+- [x] Geçici hatalar en fazla 3 node attempt; kalıcı hata doğru node/kod ile kaydoluyor.
+- [x] Worker restart bilinen fal isteğini tekrar göndermeden tamamlıyor; process kapatma test kanıtı var.
+- [x] Idempotency eşzamanlı tekrarda tek run/job; payload conflict açık.
+- [x] Tahmini maliyet node/run detayında; fiyat snapshot, dedup ve partial doğru.
+- [x] Uygulama logları JSON ve run_id/node_id/attempt içeriyor; provider hataları error seviyesinde; DEBUG ayrıntıları, retry/recovery korelasyonu ve secret temizliği doğrulanmış.
+- [x] Dashboard üretici model kimliğini ve adım/deneme/süre/hata bilgilerini run izinden gösteriyor; gerçek üretim görüntüsü canlı kabulde ayrıca kontrol edilecek.
+- [x] TanStack Query aktif run'ı poll ediyor, terminal durumda duruyor; ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
+- [x] CodeMirror JSON sözdizimi hatalarını ve API bulgularını gösteriyor; backend kaydetme doğrulaması zorunlu, kaydedilmemiş metin query yenilemesinde korunuyor.
 - [ ] İlk doğrudan akış ve FlowKit eşleştirmesi gerçek kayıtla belgeli.
 - [ ] İki farklı workflow iki farklı kayıtlı görsel modelle gerçekten çalışıyor.
-- [ ] Yeni model ve ikinci workflow yalnızca API verisiyle, restart/deploy/kod değişmeden eklenmiş.
+- [ ] Yeni model ve ikinci workflow yalnızca API verisiyle, restart/deploy/kod değişmeden gerçek sağlayıcıyla çalıştırılmış. Mock HTTP kabulü geçti.
 - [ ] Doğrudan deneme dahil gerçek harcamalar sağlayıcı bazında kayıtlı; fal 5 USD ve OpenRouter 2 USD anahtar sınırları korunmuş.
-- [ ] Küçük çözünürlük, tek görsel ve kısa LLM çıktısı kullanılmış; fiyat/faturalama birimi ve model seçimi gerekçeleri belgeli.
-- [ ] Otomatik testler gerçek provider/pricing/media çağrısı yapmıyor ve hata yolları geçiyor.
-- [ ] GitHub linki, kısa README, AGENTS.md ve gerçek AI çalışma notları hazır.
-- [ ] Bir hafta daha paragrafı ve bilinen sınırlar açık.
-- [ ] Deploy varsa dashboard ve API korunmuş; erişim bilgisi paylaşılmış.
+- [x] Demo tanımları küçük çözünürlük, tek görsel ve kısa LLM çıktısı kullanıyor; fiyat/faturalama birimi ve model seçimi gerekçeleri belgeli.
+- [x] Otomatik testler gerçek provider/pricing/media çağrısı yapmıyor ve hata yolları geçiyor.
+- [x] GitHub linki, kısa README, AGENTS.md ve gerçek AI çalışma notları hazır.
+- [x] Bir hafta daha paragrafı ve bilinen sınırlar açık.
+- Bulut deploy yapılmadı; isteğe bağlı bu teslim kalemi uygulanmıyor. Local gateway yalnızca 127.0.0.1'e bağlı.
 
 Operasyonel olarak gerçek sağlayıcı doğrulaması için iki API anahtarı ve hesaplarda yeterli erişim/bakiye gerekir. Uygulama, PostgreSQL/River entegrasyon testleri ve Docker kurulumu tamamlandı; çalıştırılmış kontroller ve henüz bekleyen canlı kabul adımları [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) dosyasında tutulur. Yukarıdaki liste planın kabul ölçütleridir; canlı sağlayıcı kanıtı test kanıtından ayrı değerlendirilir.
 

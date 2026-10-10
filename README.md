@@ -144,6 +144,8 @@ cd web && npm ci && npm test && npm run build
 
 PowerShell: `$env:TEST_DATABASE_URL='postgres://flowkit:flowkit@localhost:55432/flowkit_test?sslmode=disable'`. Integration test DB adı `_test` ile bitmelidir; testler bu ayrı DB'yi temizler. Ortam değişkeni yoksa integration testler açıkça skip edilir. CI gerçek provider anahtarı içermez. sqlc 1.31.1 ile `sqlc generate`; generated kod repodadır ve CI fark kontrolü yapar.
 
+CI ayrıca temiz Docker Compose kurulumu, örnek yükleme, gateway statik dosyası ve gerçek worker üzerinde sağlayıcısız `input → output` run'ını kontrol eder. Bu kontrol ücretli istek göndermez; kendi oluşturduğu test workflow'unu sonunda soft-delete eder. Yerelde çalışan temiz örnek ortam için `node tools/check-compose.mjs http://localhost:8080`. OpenAPI yeniden üretimi de CI'da fark kontrolüne dahildir.
+
 API/worker/init/bootstrap/River uygulama logları JSONL: run_id, node_id, attempt (bağlam yoksa null), event, request/model/provider kimlikleri, süre, retry ve hata. DEBUG demo varsayılanıdır; `LOG_LEVEL` ile değişir. Provider hataları ERROR. Tam input/prompt/output DB izinde; credential/header/base64 loglanmaz. Nginx access log JSON; PostgreSQL motor ve Nginx native error logları altyapı loglarıdır. Docker log rotation 10 MB × 3.
 
 ## Model seçimi, bütçe ve AI kullanımı

@@ -1,8 +1,11 @@
 name: FlowKit checks
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:18.6-alpine
@@ -12,8 +15,8 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://flowkit:flowkit@localhost:5432/flowkit_test?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: {go-version-file: go.mod, cache: true}
       - run: test -z "$(gofmt -l $(find . -name '*.go'))"
       - run: go vet ./...
@@ -21,13 +24,41 @@ jobs:
       - run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
       - run: sqlc generate && git diff --exit-code -- internal/storage/dbgen
   dashboard:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     defaults:
       run: {working-directory: web}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with: {node-version: 24.21.0, cache: npm, cache-dependency-path: web/package-lock.json}
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - name: Check generated OpenAPI
+        working-directory: .
+        run: |
+          node tools/generate-openapi.mjs
+          git diff --exit-code -- docs/openapi.json
+  compose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      OPENROUTER_API_KEY: ""
+      FAL_KEY: ""
+      LOAD_EXAMPLES: "true"
+      LOG_LEVEL: info
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: {node-version: 24.21.0}
+      - name: Start complete stack without provider keys
+        run: docker compose -p flowkit-ci up --build --detach --wait --wait-timeout 180
+      - name: Verify gateway, bootstrap and asynchronous worker
+        run: node tools/check-compose.mjs http://localhost:8080
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose -p flowkit-ci logs --no-color --tail=100
+      - name: Remove disposable CI containers and volumes
+        if: always()
+        run: docker compose -p flowkit-ci down --volumes --remove-orphans

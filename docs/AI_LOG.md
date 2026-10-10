@@ -18,3 +18,10 @@
 - Sağlayıcı HTTP fixture'ları gerçek response model ID, usage decimal precision, refusal/empty/truncated completion, fal error_type ve queue URL'lerini doğrular. Pricing ve media testleri de local mock kullanır.
 - Son Compose rebuild sonrasında API sağlıklı kalırken gateway 502 döndü. Nginx'in startup'ta çözdüğü eski container IP'sini tuttuğu loglardan görüldü. Docker DNS resolver ve değişken proxy hedefi eklendi. Eski IP geçici bir test container'ıyla ayrıldı, API farklı IP ile yeniden oluşturuldu; gateway container kimliği değişmeden health bağlantısı yaklaşık 2,5 saniyede toparlandı. İlk upstream resolve denemesi 15 saniyelik toparlanma kontrolünü geçmediği için kullanılmadı.
 - İlk GitHub CI checkout'ında `internal/artifacts` paketi eksikti: `.gitignore` içindeki `artifacts/` her seviyedeki aynı isimli klasörü dışlıyordu. Yerel testte dosya bulunduğundan görülmemişti. Kural `/artifacts/` olarak yalnızca çıktı klasörüne daraltıldı ve kaynak dosyası repoya eklendi; bu hata temiz checkout doğrulamasının önemini gösterdi.
+
+## 2026-10-11 — anahtarlardan bağımsız teslim kontrolü
+
+- Kullanıcı API anahtarlarını bütün bağımsız işler bittikten sonra gireceğini belirtti; canlı deneme istenmedi ve yapılmadı.
+- Temiz checkout paketlemesini sürekli doğrulamak için CI'ya tam Compose kurulum kontrolü eklendi. Ücretli sağlayıcıya giden node içermeyen `input → output` workflow ile gerçek API/River worker ve idempotency kontrol edilir; bu run canlı AI kanıtı olarak sunulmaz.
+- OpenAPI üretim farkı CI'ya eklendi. Önceki CI'daki Node 20 action uyarısı için resmi [checkout v7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), [setup-go v7.0.0](https://github.com/actions/setup-go/releases/tag/v7.0.0), [setup-node v7.1.0](https://github.com/actions/setup-node/releases/tag/v7.1.0) etiketleri doğrulandı ve commit SHA'ları sabitlendi. Runner Ubuntu 24.04 olarak sabitlendi.
+- Plan kontrol listesi uygulanmış/test edilmiş maddeler ile canlı sağlayıcı bekleyen maddeleri ayıracak şekilde güncellendi.
