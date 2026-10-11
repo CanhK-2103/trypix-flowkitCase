@@ -130,6 +130,62 @@ type controlledWorker struct {
 	usedIDs map[string]bool
 }
 
+func (w *controlledWorker) now() time.Time {
+	if w.engine.Now != nil {
+		return w.engine.Now().UTC()
+	}
+	return time.Now().UTC()
+}
+
+func activeNode(r *domain.Run) *domain.NodeRun {
+	for i := range r.Nodes {
+		if r.Nodes[i].Status != "succeeded" {
+			return &r.Nodes[i]
+		}
+	}
+	return nil
+}
+
+func (w *controlledWorker) recordWait(ctx context.Context, r *domain.Run, at time.Time, source string) error {
+	n := activeNode(r)
+	if n == nil || n.DeadlineAt == nil || r.Terminal() {
+		return nil
+	}
+	if n.ApprovalPause == nil {
+		n.ApprovalPause = &domain.ApprovalPause{OriginalDeadline: *n.DeadlineAt, Source: source}
+	}
+	if n.ApprovalPause.StartedAt != nil {
+		return nil
+	}
+	n.ApprovalPause.StartedAt = &at
+	if err := w.engine.Store.SaveRun(ctx, r); err != nil {
+		return err
+	}
+	w.engine.Log.Info("Human approval wait recorded", "event", "demo.approval_wait_started", "run_id", r.ID, "node_id", n.Node.ID, "attempt", len(n.Attempts), "waiting_since", at, "original_deadline_at", n.ApprovalPause.OriginalDeadline, "source", source)
+	return nil
+}
+
+func (w *controlledWorker) resumeWait(ctx context.Context, r *domain.Run) error {
+	n := activeNode(r)
+	if n == nil || n.ApprovalPause == nil || n.ApprovalPause.StartedAt == nil || n.DeadlineAt == nil {
+		return nil
+	}
+	p := n.ApprovalPause
+	duration := w.now().Sub(*p.StartedAt)
+	if duration < 0 {
+		return errors.New("approval wait starts in the future")
+	}
+	deadline := n.DeadlineAt.Add(duration)
+	n.DeadlineAt = &deadline
+	p.TotalMS += duration.Milliseconds()
+	p.StartedAt = nil
+	if err := w.engine.Store.SaveRun(ctx, r); err != nil {
+		return err
+	}
+	w.engine.Log.Info("Human wait excluded from provider budget", "event", "demo.approval_wait_finished", "run_id", r.ID, "node_id", n.Node.ID, "attempt", len(n.Attempts), "approval_wait_ms", p.TotalMS, "original_deadline_at", p.OriginalDeadline, "deadline_at", n.DeadlineAt)
+	return nil
+}
+
 func (w *controlledWorker) Work(ctx context.Context, job *river.Job[jobs.RunArgs]) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -146,9 +202,15 @@ func (w *controlledWorker) Work(ctx context.Context, job *river.Job[jobs.RunArgs
 		grant, ok := w.grants[id]
 		if !ok || grant.Operation != op {
 			delete(w.grants, id)
+			if err := w.recordWait(ctx, r, w.now(), "approval_gate"); err != nil {
+				return err
+			}
 			return river.JobSnooze(2 * time.Second)
 		}
 		delete(w.grants, id)
+		if err := w.resumeWait(ctx, r); err != nil {
+			return err
+		}
 		client := providers.New(w.engine.Config)
 		// Fresh HTTP/1 connections avoid transport-level replays on reused
 		// connections. Redirects are also disabled by providers.New.
@@ -182,7 +244,8 @@ func (w *controlledWorker) handler() http.Handler {
 	})
 	mux.HandleFunc("POST /track", func(res http.ResponseWriter, req *http.Request) {
 		var body struct {
-			RunID string `json:"run_id"`
+			RunID        string     `json:"run_id"`
+			WaitingSince *time.Time `json:"waiting_since,omitempty"`
 		}
 		if json.NewDecoder(http.MaxBytesReader(res, req.Body, 4096)).Decode(&body) != nil {
 			http.Error(res, "Invalid request", http.StatusBadRequest)
@@ -190,9 +253,29 @@ func (w *controlledWorker) handler() http.Handler {
 		}
 		w.mu.Lock()
 		defer w.mu.Unlock()
-		if _, err := w.engine.Store.LoadRun(req.Context(), body.RunID); err != nil {
+		r, err := w.engine.Store.LoadRun(req.Context(), body.RunID)
+		if err != nil {
 			http.Error(res, "Run not found", http.StatusNotFound)
 			return
+		}
+		// Explicit migration of a known request from the older approval tool.
+		// The operator supplies the recorded request-ID commit log timestamp;
+		// no model, request, result, cost or original deadline is rewritten.
+		if body.WaitingSince != nil {
+			n := activeNode(r)
+			if n == nil || n.Status != "waiting_provider" || len(n.Requests) == 0 || r.Terminal() || n.ApprovalPause != nil {
+				http.Error(res, "Cannot adopt approval wait", http.StatusConflict)
+				return
+			}
+			q := n.Requests[len(n.Requests)-1]
+			if q.ProviderRequestID == "" || q.Phase != "waiting_provider" || body.WaitingSince.Before(q.CreatedAt) || body.WaitingSince.After(w.now()) {
+				http.Error(res, "Invalid recorded waiting timestamp", http.StatusBadRequest)
+				return
+			}
+			if err := w.recordWait(req.Context(), r, body.WaitingSince.UTC(), "legacy_request_id_commit_log"); err != nil {
+				http.Error(res, "Could not persist approval wait", http.StatusInternalServerError)
+				return
+			}
 		}
 		w.tracked[body.RunID] = true
 		res.WriteHeader(http.StatusAccepted)

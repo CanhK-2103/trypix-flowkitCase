@@ -68,7 +68,11 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 
 ## Henüz doğrulanmamış canlı kabul
 
-Çağrı başına onaylı kabul hazırlığı tamam: ayrı boş `flowkit-acceptance` ortamında API ve kontrollü River worker çalışıyor (dashboard 8081, yerel kontrol 8082). Yalnızca ilk iki model ve ürün workflow'u API'den eklendi. Run `a733fb1e-686e-4d78-8386-09ce5953a36a` DB'ye kaydedildi; input tamam, LLM henüz pending/0 attempt, provider request ve onaylı sağlayıcı çağrısı sayısı 0. Başlangıç tahmini 0.003157700000 USD; canlı ilk completion ayrıca kullanıcı onayı bekliyor. Bu hazırlık başarılı üretim kanıtı değildir. `d597ac0` commit'inin backend/dashboard/compose CI kontrolleri başarılı.
+Çağrı başına onaylı kabul hazırlığı tamam: ayrı boş `flowkit-acceptance` ortamında API ve kontrollü River worker çalışıyor (dashboard 8081, yerel kontrol 8082). Yalnızca ilk iki model ve ürün workflow'u API'den eklendi. Başlangıçta provider request/onaylı sağlayıcı çağrısı 0 olarak doğrulandı. `d597ac0` commit'inin backend/dashboard/compose CI kontrolleri başarılı.
+
+Kullanıcının ayrı onayıyla run `a733fb1e-686e-4d78-8386-09ce5953a36a` içindeki LLM adımı canlı tamamlandı: actual model `openai/gpt-6-luna`, request `gen-1791724330-VzRw2gWX6NozFJbhqaTE`, 1 attempt, 2142 ms, 58 input + 68 output token; gerçek `usage.cost` ve DB kaydı `0.000039800000 USD`. Başlangıç tahmini `0.003157700000 USD` korundu. API/worker container kimlikleri ve başlangıç zamanları aynı.
+
+Sonraki ayrı onayla fal Schnell submit (512×512, 1 görsel, 4 step) yapıldı: request `01a12b1f-c88d-73a2-85f1-cce572dc075b`, 1 attempt, HTTP 200; request ID ve queue URL'leri 1421 ms içinde `waiting_provider` fazıyla DB'ye commit edildi, version 7 doğrudan DB sorgusunda doğrulandı. Toplam 2 credentialed HTTP çağrısı; pricing/status/result/billing henüz yapılmadı. Run tamamlanmadı, fal actual ve gerçek toplam null/pending. [Kısmi canlı kanıt](evidence/flowkit-approved.json) fal tamamlanma kanıtı değildir; kalan her credentialed işlem açık onay bekliyor.
 
 - Aynı modeller/prompt/parametrelerle FlowKit run'ı.
 - Schnell → API ile Dev kaydı → modelRef güncelleme → gerçek Dev run'ı; servis restart olmadan.

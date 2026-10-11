@@ -28,7 +28,9 @@ Başlangıçta sadece `prompt-writer`, `flux-schnell` ve ürün workflow'u örne
 
 Fal pricing ve status ayrı kalıcı worker adımlarına ayrılmıştır. Request ID submit sonrasında yine hemen commit edilir. Onay beklemek domain attempt veya sağlayıcı isteği oluşturmaz. Eski sürüme/başka node'a ait onay ve aynı approval ID'nin tekrarı reddedilir. Bir transport çağrısı dışında hiçbir credentialed HTTP isteğine izin verilmez; redirect ve bağlantı yeniden kullanımı kapalıdır. Onaylar bellektedir; worker yeniden açılırsa yeniden onay gerekir, otomatik devam etmez.
 
-Standart node deadline'ları korunur (LLM 120 saniye, görsel 600 saniye). Görsel submit sonrası onay bekleyişi de bu süreye dahildir. Süre aşılırsa run standart hata politikasıyla başarısız olur; geçmiş deadline değiştirilmez veya bilinen request ID silinmez.
+Standart worker'ın node deadline'ları duvar saatiyle işler (LLM 120 saniye, görsel 600 saniye). Kontrollü demo worker'ında insan onayı bekleme başlangıcı DB'deki `approval_pause` alanına kaydedilir; onay geldiğinde beklenen süre deadline'a eklenir. İlk deadline `original_deadline_at`, toplam insan bekleyişi `total_ms` ve loglarda korunur. Böylece insan onayı sağlayıcı zaman aşımı sayılmaz; gerçek sağlayıcı işlemlerinin süre bütçesi korunur. Node/run süreleri toplam geçen süreyi içerir, onay bekleyişi ayrı okunabilir. Worker restart sonrası bekleyen onay saati DB'den devam eder; yeni onay yine gerekir. Normal worker bu demo politikasını uygulamaz.
+
+Eski demo aracından kalan bilinen `waiting_provider` isteği için `/track` gövdesine isteğin ID commit log'unda kaydedilmiş `waiting_since` UTC zamanı eklenebilir. Bu yalnızca mevcut request ID için açık, loglanan bir geçiştir; geçmiş sağlayıcı yanıtı, model veya maliyet değiştirilmez, yeni üretim gönderilmez. Özgün deadline ve geçiş kaynağı kalıcıdır.
 
 Görsel sonucu kaydedildikten sonra anahtarsız medya indirme ve yerel output fazları otomatik tamamlanır. Bu araç billing reconciler başlatmaz. Gerçek fal ücretini öğrenmek için ayrıca onaylı, exact request ID'ye ait billing isteği ve uygun yetkili anahtar gerekir. Ücret bilinmiyorsa actual total null kalır.
 

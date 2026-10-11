@@ -1,0 +1,1343 @@
+{
+  "session_id": "11df08c8-088b-4074-ac2d-5f5ba8480659",
+  "phase": "awaiting_fal_pricing_approval",
+  "api_url": "http://localhost:8081",
+  "code_revision": "d597ac0345e9429616d9d7f28bf2296e079ccfaf",
+  "baseline_git_sha": "b049553f2d094fb47f34d1c4159aa66407200e1b",
+  "before_containers": [
+    "9ba1517ef5ade30da6b1f4cfae5133c14f91eb7141fabb0a0588b61f5ea208fe|2026-10-11T12:56:59.28991805Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5",
+    "bc78b0d501559a9ae1710b0b5a98e2080f8080f448fcb2c4fbee6f0712c0ed5b|2026-10-11T12:56:59.041746881Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5"
+  ],
+  "current_containers": [
+    "9ba1517ef5ade30da6b1f4cfae5133c14f91eb7141fabb0a0588b61f5ea208fe|2026-10-11T12:56:59.28991805Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5",
+    "bc78b0d501559a9ae1710b0b5a98e2080f8080f448fcb2c4fbee6f0712c0ed5b|2026-10-11T12:56:59.041746881Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5"
+  ],
+  "credentialed_provider_calls": 2,
+  "approvals": [
+    {
+      "approval_id": "user-approved-first-flowkit-completion-a733fb1e",
+      "at": "2026-10-11T13:12:07.9637511Z",
+      "user_reply": "evet",
+      "scope": "one OpenRouter completion; no additional provider requests/retries/polling/billing",
+      "estimated_cost_usd": "0.000157700000",
+      "operation": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "version": 2,
+        "node_id": "prompt_writer",
+        "attempt": 1,
+        "provider": "openrouter",
+        "model": "openai/gpt-6-luna",
+        "action": "completion",
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
+      },
+      "consumed": true
+    },
+    {
+      "approval_id": "user-approved-first-flowkit-schnell-submit-a733fb1e",
+      "at": "2026-10-11T13:21:02.0686404Z",
+      "user_reply": "onayliyorum",
+      "scope": "one fal Schnell queue submit; 512x512, one image, four steps; no further calls/retries/pricing/status/result/billing",
+      "estimated_cost_usd": "0.003000000000",
+      "operation": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "version": 5,
+        "node_id": "render",
+        "attempt": 1,
+        "provider": "fal",
+        "model": "fal-ai/flux/schnell",
+        "action": "submit",
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/flux/schnell"
+      },
+      "consumed": true
+    }
+  ],
+  "requests": [
+    {
+      "at": "2026-10-11T12:58:04.1589195Z",
+      "method": "POST",
+      "path": "/models",
+      "body": {
+        "alias": "prompt-writer",
+        "provider": "openrouter",
+        "modelId": "openai/gpt-6-luna",
+        "inputProfile": "openrouter-chat-text-v1",
+        "defaults": {
+          "reasoning": {
+            "effort": "none"
+          },
+          "max_completion_tokens": 300
+        },
+        "enabled": true,
+        "pricing": {
+          "currency": "USD",
+          "unit": "tokens",
+          "inputPerMillion": "0.10",
+          "outputPerMillion": "0.50",
+          "source": "OpenRouter public model metadata; verify before live demo",
+          "updatedAt": "2026-10-10T00:00:00Z"
+        }
+      },
+      "http_status": 201,
+      "response": {
+        "alias": "prompt-writer",
+        "provider": "openrouter",
+        "modelId": "openai/gpt-6-luna",
+        "inputProfile": "openrouter-chat-text-v1",
+        "defaults": {
+          "max_completion_tokens": 300,
+          "reasoning": {
+            "effort": "none"
+          }
+        },
+        "enabled": true,
+        "pricing": {
+          "currency": "USD",
+          "unit": "tokens",
+          "inputPerMillion": "0.10",
+          "outputPerMillion": "0.50",
+          "source": "OpenRouter public model metadata; verify before live demo",
+          "updatedAt": "2026-10-10T00:00:00Z"
+        }
+      }
+    },
+    {
+      "at": "2026-10-11T12:58:06.2382029Z",
+      "method": "POST",
+      "path": "/models",
+      "body": {
+        "alias": "flux-schnell",
+        "provider": "fal",
+        "modelId": "fal-ai/flux/schnell",
+        "inputProfile": "fal-text-to-image-v1",
+        "defaults": {
+          "num_images": 1,
+          "num_inference_steps": 4,
+          "image_size": {
+            "width": 512,
+            "height": 512
+          }
+        },
+        "enabled": true,
+        "pricing": {
+          "currency": "USD",
+          "unit": "megapixel",
+          "unitPrice": "0.003",
+          "source": "fal public model page; rounded up to one megapixel",
+          "updatedAt": "2026-10-10T00:00:00Z"
+        }
+      },
+      "http_status": 201,
+      "response": {
+        "alias": "flux-schnell",
+        "provider": "fal",
+        "modelId": "fal-ai/flux/schnell",
+        "inputProfile": "fal-text-to-image-v1",
+        "defaults": {
+          "image_size": {
+            "height": 512,
+            "width": 512
+          },
+          "num_images": 1,
+          "num_inference_steps": 4
+        },
+        "enabled": true,
+        "pricing": {
+          "currency": "USD",
+          "unit": "megapixel",
+          "unitPrice": "0.003",
+          "source": "fal public model page; rounded up to one megapixel",
+          "updatedAt": "2026-10-10T00:00:00Z"
+        }
+      }
+    },
+    {
+      "at": "2026-10-11T12:58:08.2945624Z",
+      "method": "POST",
+      "path": "/workflows",
+      "body": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "name": "Ürün katalog görseli",
+        "description": "Ürün açıklamasından sade stüdyo fotoğrafı üretir.",
+        "definition": {
+          "schemaVersion": 1,
+          "nodes": [
+            {
+              "id": "input",
+              "kind": "input",
+              "params": {
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    }
+                  },
+                  "required": [
+                    "description"
+                  ],
+                  "additionalProperties": false
+                },
+                "textField": "description"
+              }
+            },
+            {
+              "id": "prompt_writer",
+              "kind": "llm",
+              "modelRef": "prompt-writer",
+              "params": {
+                "reasoning": {
+                  "effort": "none"
+                },
+                "max_completion_tokens": 300
+              },
+              "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+            },
+            {
+              "id": "render",
+              "kind": "image",
+              "modelRef": "flux-schnell",
+              "params": {
+                "image_size": {
+                  "width": 512,
+                  "height": 512
+                },
+                "num_images": 1
+              }
+            },
+            {
+              "id": "output",
+              "kind": "output",
+              "params": {}
+            }
+          ],
+          "edges": [
+            {
+              "from": "input",
+              "fromPort": "text",
+              "to": "prompt_writer",
+              "toPort": "text"
+            },
+            {
+              "from": "prompt_writer",
+              "fromPort": "prompt",
+              "to": "render",
+              "toPort": "prompt"
+            },
+            {
+              "from": "render",
+              "fromPort": "image",
+              "to": "output",
+              "toPort": "image"
+            }
+          ]
+        }
+      },
+      "http_status": 201,
+      "response": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "name": "Ürün katalog görseli",
+        "description": "Ürün açıklamasından sade stüdyo fotoğrafı üretir.",
+        "definition": {
+          "schemaVersion": 1,
+          "nodes": [
+            {
+              "id": "input",
+              "kind": "input",
+              "params": {
+                "inputSchema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "maxLength": 2000,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description"
+                  ],
+                  "type": "object"
+                },
+                "textField": "description"
+              }
+            },
+            {
+              "id": "prompt_writer",
+              "kind": "llm",
+              "modelRef": "prompt-writer",
+              "params": {
+                "max_completion_tokens": 300,
+                "reasoning": {
+                  "effort": "none"
+                }
+              },
+              "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+            },
+            {
+              "id": "render",
+              "kind": "image",
+              "modelRef": "flux-schnell",
+              "params": {
+                "image_size": {
+                  "height": 512,
+                  "width": 512
+                },
+                "num_images": 1
+              }
+            },
+            {
+              "id": "output",
+              "kind": "output"
+            }
+          ],
+          "edges": [
+            {
+              "from": "input",
+              "fromPort": "text",
+              "to": "prompt_writer",
+              "toPort": "text"
+            },
+            {
+              "from": "prompt_writer",
+              "fromPort": "prompt",
+              "to": "render",
+              "toPort": "prompt"
+            },
+            {
+              "from": "render",
+              "fromPort": "image",
+              "to": "output",
+              "toPort": "image"
+            }
+          ]
+        },
+        "revision": 1,
+        "created_at": "2026-10-11T12:58:08.288470432Z",
+        "updated_at": "2026-10-11T12:58:08.288470432Z"
+      }
+    },
+    {
+      "at": "2026-10-11T12:58:10.3608934Z",
+      "method": "POST",
+      "path": "/workflows/10000000-0000-4000-8000-000000000001/estimate",
+      "body": {
+        "input": {
+          "description": "Ahşap saplı, mat mavi seramik kahve kupası."
+        }
+      },
+      "http_status": 200,
+      "response": {
+        "workflow_revision": 1,
+        "created_at": "2026-10-11T12:58:10.35904625Z",
+        "nodes": [
+          {
+            "node_id": "input",
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            },
+            "assumptions": []
+          },
+          {
+            "node_id": "prompt_writer",
+            "model_id": "openai/gpt-6-luna",
+            "cost": {
+              "estimated_cost_usd": "0.000157700000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "OpenRouter public model metadata; verify before live demo"
+            },
+            "assumptions": [
+              "Girdi için yaklaşık 4 karakter/token + 16 mesaj tokenı; çıktı için max_completion_tokens. Kesin üst sınır değildir; tek deneme, retry hariç."
+            ]
+          },
+          {
+            "node_id": "render",
+            "model_id": "fal-ai/flux/schnell",
+            "cost": {
+              "estimated_cost_usd": "0.003000000000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "fal public model page; rounded up to one megapixel"
+            },
+            "assumptions": [
+              "Katalog fiyatı × seçilen görsel boyutu; tek üretim, retry hariç."
+            ]
+          },
+          {
+            "node_id": "output",
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            },
+            "assumptions": []
+          }
+        ],
+        "cost": {
+          "estimated_cost_usd": "0.003157700000",
+          "reported_cost_usd": "0.000000000000",
+          "actual_cost_usd": null,
+          "actual_cost_status": "pending",
+          "cost_status": "complete"
+        }
+      }
+    },
+    {
+      "at": "2026-10-11T12:58:12.4591157Z",
+      "method": "POST",
+      "path": "/workflows/10000000-0000-4000-8000-000000000001/runs",
+      "body": {
+        "input": {
+          "description": "Ahşap saplı, mat mavi seramik kahve kupası."
+        }
+      },
+      "http_status": 202,
+      "response": {
+        "detail_url": "/runs/a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "initial_estimate": {
+          "workflow_revision": 1,
+          "created_at": "2026-10-11T12:58:12.444399409Z",
+          "nodes": [
+            {
+              "node_id": "input",
+              "cost": {
+                "estimated_cost_usd": "0.000000000000",
+                "reported_cost_usd": "0.000000000000",
+                "actual_cost_usd": "0.000000000000",
+                "actual_cost_status": "complete",
+                "actual_cost_source": "local",
+                "cost_status": "complete",
+                "pricing_source": "local"
+              },
+              "assumptions": []
+            },
+            {
+              "node_id": "prompt_writer",
+              "model_id": "openai/gpt-6-luna",
+              "cost": {
+                "estimated_cost_usd": "0.000157700000",
+                "reported_cost_usd": null,
+                "actual_cost_usd": null,
+                "actual_cost_status": "pending",
+                "cost_status": "complete",
+                "pricing_source": "OpenRouter public model metadata; verify before live demo"
+              },
+              "assumptions": [
+                "Girdi için yaklaşık 4 karakter/token + 16 mesaj tokenı; çıktı için max_completion_tokens. Kesin üst sınır değildir; tek deneme, retry hariç."
+              ]
+            },
+            {
+              "node_id": "render",
+              "model_id": "fal-ai/flux/schnell",
+              "cost": {
+                "estimated_cost_usd": "0.003000000000",
+                "reported_cost_usd": null,
+                "actual_cost_usd": null,
+                "actual_cost_status": "pending",
+                "cost_status": "complete",
+                "pricing_source": "fal public model page; rounded up to one megapixel"
+              },
+              "assumptions": [
+                "Katalog fiyatı × seçilen görsel boyutu; tek üretim, retry hariç."
+              ]
+            },
+            {
+              "node_id": "output",
+              "cost": {
+                "estimated_cost_usd": "0.000000000000",
+                "reported_cost_usd": "0.000000000000",
+                "actual_cost_usd": "0.000000000000",
+                "actual_cost_status": "complete",
+                "actual_cost_source": "local",
+                "cost_status": "complete",
+                "pricing_source": "local"
+              },
+              "assumptions": []
+            }
+          ],
+          "cost": {
+            "estimated_cost_usd": "0.003157700000",
+            "reported_cost_usd": "0.000000000000",
+            "actual_cost_usd": null,
+            "actual_cost_status": "pending",
+            "cost_status": "complete"
+          }
+        },
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "status": "queued",
+        "status_url": "/runs/a733fb1e-686e-4d78-8386-09ce5953a36a/status"
+      }
+    },
+    {
+      "at": "2026-10-11T12:58:21.6320097Z",
+      "method": "GET",
+      "path": "/runs/a733fb1e-686e-4d78-8386-09ce5953a36a",
+      "body": null,
+      "http_status": 200,
+      "response": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "workflow_snapshot": {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "name": "Ürün katalog görseli",
+          "description": "Ürün açıklamasından sade stüdyo fotoğrafı üretir.",
+          "definition": {
+            "schemaVersion": 1,
+            "nodes": [
+              {
+                "id": "input",
+                "kind": "input",
+                "params": {
+                  "inputSchema": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "description": {
+                        "maxLength": 2000,
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "description"
+                    ],
+                    "type": "object"
+                  },
+                  "textField": "description"
+                }
+              },
+              {
+                "id": "prompt_writer",
+                "kind": "llm",
+                "modelRef": "prompt-writer",
+                "params": {
+                  "max_completion_tokens": 300,
+                  "reasoning": {
+                    "effort": "none"
+                  }
+                },
+                "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+              },
+              {
+                "id": "render",
+                "kind": "image",
+                "modelRef": "flux-schnell",
+                "params": {
+                  "image_size": {
+                    "height": 512,
+                    "width": 512
+                  },
+                  "num_images": 1
+                }
+              },
+              {
+                "id": "output",
+                "kind": "output"
+              }
+            ],
+            "edges": [
+              {
+                "from": "input",
+                "fromPort": "text",
+                "to": "prompt_writer",
+                "toPort": "text"
+              },
+              {
+                "from": "prompt_writer",
+                "fromPort": "prompt",
+                "to": "render",
+                "toPort": "prompt"
+              },
+              {
+                "from": "render",
+                "fromPort": "image",
+                "to": "output",
+                "toPort": "image"
+              }
+            ]
+          },
+          "revision": 1,
+          "created_at": "2026-10-11T12:58:08.288470432Z",
+          "updated_at": "2026-10-11T12:58:08.288470432Z"
+        },
+        "input": {
+          "description": "Ahşap saplı, mat mavi seramik kahve kupası."
+        },
+        "status": "running",
+        "request_id": "9facb2c20e3077535338f977803ab586",
+        "job_id": 1,
+        "version": 2,
+        "created_at": "2026-10-11T12:58:12.444399409Z",
+        "started_at": "2026-10-11T12:58:14.814432027Z",
+        "queue_wait_ms": 2370,
+        "duration_ms": 0,
+        "nodes": [
+          {
+            "node": {
+              "id": "input",
+              "kind": "input",
+              "params": {
+                "inputSchema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "maxLength": 2000,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description"
+                  ],
+                  "type": "object"
+                },
+                "textField": "description"
+              }
+            },
+            "status": "succeeded",
+            "output": {
+              "text": "Ahşap saplı, mat mavi seramik kahve kupası."
+            },
+            "started_at": "2026-10-11T12:58:14.814432027Z",
+            "finished_at": "2026-10-11T12:58:14.814492231Z",
+            "duration_ms": 0,
+            "attempts": [],
+            "provider_requests": [],
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            }
+          },
+          {
+            "node": {
+              "id": "prompt_writer",
+              "kind": "llm",
+              "modelRef": "prompt-writer",
+              "params": {
+                "max_completion_tokens": 300,
+                "reasoning": {
+                  "effort": "none"
+                }
+              },
+              "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+            },
+            "model_snapshot": {
+              "alias": "prompt-writer",
+              "provider": "openrouter",
+              "modelId": "openai/gpt-6-luna",
+              "inputProfile": "openrouter-chat-text-v1",
+              "defaults": {
+                "max_completion_tokens": 300,
+                "reasoning": {
+                  "effort": "none"
+                }
+              },
+              "enabled": true,
+              "pricing": {
+                "currency": "USD",
+                "unit": "tokens",
+                "inputPerMillion": "0.10",
+                "outputPerMillion": "0.50",
+                "source": "OpenRouter public model metadata; verify before live demo",
+                "updatedAt": "2026-10-10T00:00:00Z"
+              }
+            },
+            "status": "pending",
+            "duration_ms": 0,
+            "attempts": [],
+            "provider_requests": [],
+            "cost": {
+              "estimated_cost_usd": "0.000157700000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "OpenRouter public model metadata; verify before live demo"
+            }
+          },
+          {
+            "node": {
+              "id": "render",
+              "kind": "image",
+              "modelRef": "flux-schnell",
+              "params": {
+                "image_size": {
+                  "height": 512,
+                  "width": 512
+                },
+                "num_images": 1
+              }
+            },
+            "model_snapshot": {
+              "alias": "flux-schnell",
+              "provider": "fal",
+              "modelId": "fal-ai/flux/schnell",
+              "inputProfile": "fal-text-to-image-v1",
+              "defaults": {
+                "image_size": {
+                  "height": 512,
+                  "width": 512
+                },
+                "num_images": 1,
+                "num_inference_steps": 4
+              },
+              "enabled": true,
+              "pricing": {
+                "currency": "USD",
+                "unit": "megapixel",
+                "unitPrice": "0.003",
+                "source": "fal public model page; rounded up to one megapixel",
+                "updatedAt": "2026-10-10T00:00:00Z"
+              }
+            },
+            "status": "pending",
+            "duration_ms": 0,
+            "attempts": [],
+            "provider_requests": [],
+            "cost": {
+              "estimated_cost_usd": "0.003000000000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "fal public model page; rounded up to one megapixel"
+            }
+          },
+          {
+            "node": {
+              "id": "output",
+              "kind": "output"
+            },
+            "status": "pending",
+            "duration_ms": 0,
+            "attempts": [],
+            "provider_requests": [],
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            }
+          }
+        ],
+        "cost": {
+          "estimated_cost_usd": "0.003157700000",
+          "reported_cost_usd": "0.000000000000",
+          "actual_cost_usd": null,
+          "actual_cost_status": "pending",
+          "cost_status": "complete"
+        },
+        "initial_estimate": {
+          "workflow_revision": 1,
+          "created_at": "2026-10-11T12:58:12.444399409Z",
+          "nodes": [
+            {
+              "node_id": "input",
+              "cost": {
+                "estimated_cost_usd": "0.000000000000",
+                "reported_cost_usd": "0.000000000000",
+                "actual_cost_usd": "0.000000000000",
+                "actual_cost_status": "complete",
+                "actual_cost_source": "local",
+                "cost_status": "complete",
+                "pricing_source": "local"
+              },
+              "assumptions": []
+            },
+            {
+              "node_id": "prompt_writer",
+              "model_id": "openai/gpt-6-luna",
+              "cost": {
+                "estimated_cost_usd": "0.000157700000",
+                "reported_cost_usd": null,
+                "actual_cost_usd": null,
+                "actual_cost_status": "pending",
+                "cost_status": "complete",
+                "pricing_source": "OpenRouter public model metadata; verify before live demo"
+              },
+              "assumptions": [
+                "Girdi için yaklaşık 4 karakter/token + 16 mesaj tokenı; çıktı için max_completion_tokens. Kesin üst sınır değildir; tek deneme, retry hariç."
+              ]
+            },
+            {
+              "node_id": "render",
+              "model_id": "fal-ai/flux/schnell",
+              "cost": {
+                "estimated_cost_usd": "0.003000000000",
+                "reported_cost_usd": null,
+                "actual_cost_usd": null,
+                "actual_cost_status": "pending",
+                "cost_status": "complete",
+                "pricing_source": "fal public model page; rounded up to one megapixel"
+              },
+              "assumptions": [
+                "Katalog fiyatı × seçilen görsel boyutu; tek üretim, retry hariç."
+              ]
+            },
+            {
+              "node_id": "output",
+              "cost": {
+                "estimated_cost_usd": "0.000000000000",
+                "reported_cost_usd": "0.000000000000",
+                "actual_cost_usd": "0.000000000000",
+                "actual_cost_status": "complete",
+                "actual_cost_source": "local",
+                "cost_status": "complete",
+                "pricing_source": "local"
+              },
+              "assumptions": []
+            }
+          ],
+          "cost": {
+            "estimated_cost_usd": "0.003157700000",
+            "reported_cost_usd": "0.000000000000",
+            "actual_cost_usd": null,
+            "actual_cost_status": "pending",
+            "cost_status": "complete"
+          }
+        }
+      }
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+      "workflow_snapshot": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "name": "Ürün katalog görseli",
+        "description": "Ürün açıklamasından sade stüdyo fotoğrafı üretir.",
+        "definition": {
+          "schemaVersion": 1,
+          "nodes": [
+            {
+              "id": "input",
+              "kind": "input",
+              "params": {
+                "inputSchema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "maxLength": 2000,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description"
+                  ],
+                  "type": "object"
+                },
+                "textField": "description"
+              }
+            },
+            {
+              "id": "prompt_writer",
+              "kind": "llm",
+              "modelRef": "prompt-writer",
+              "params": {
+                "max_completion_tokens": 300,
+                "reasoning": {
+                  "effort": "none"
+                }
+              },
+              "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+            },
+            {
+              "id": "render",
+              "kind": "image",
+              "modelRef": "flux-schnell",
+              "params": {
+                "image_size": {
+                  "height": 512,
+                  "width": 512
+                },
+                "num_images": 1
+              }
+            },
+            {
+              "id": "output",
+              "kind": "output"
+            }
+          ],
+          "edges": [
+            {
+              "from": "input",
+              "fromPort": "text",
+              "to": "prompt_writer",
+              "toPort": "text"
+            },
+            {
+              "from": "prompt_writer",
+              "fromPort": "prompt",
+              "to": "render",
+              "toPort": "prompt"
+            },
+            {
+              "from": "render",
+              "fromPort": "image",
+              "to": "output",
+              "toPort": "image"
+            }
+          ]
+        },
+        "revision": 1,
+        "created_at": "2026-10-11T12:58:08.288470432Z",
+        "updated_at": "2026-10-11T12:58:08.288470432Z"
+      },
+      "input": {
+        "description": "Ahşap saplı, mat mavi seramik kahve kupası."
+      },
+      "status": "running",
+      "request_id": "9facb2c20e3077535338f977803ab586",
+      "job_id": 1,
+      "version": 7,
+      "created_at": "2026-10-11T12:58:12.444399409Z",
+      "started_at": "2026-10-11T12:58:14.814432027Z",
+      "queue_wait_ms": 2370,
+      "duration_ms": 0,
+      "nodes": [
+        {
+          "node": {
+            "id": "input",
+            "kind": "input",
+            "params": {
+              "inputSchema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "description"
+                ],
+                "type": "object"
+              },
+              "textField": "description"
+            }
+          },
+          "status": "succeeded",
+          "output": {
+            "text": "Ahşap saplı, mat mavi seramik kahve kupası."
+          },
+          "started_at": "2026-10-11T12:58:14.814432027Z",
+          "finished_at": "2026-10-11T12:58:14.814492231Z",
+          "duration_ms": 0,
+          "attempts": [],
+          "provider_requests": [],
+          "cost": {
+            "estimated_cost_usd": "0.000000000000",
+            "reported_cost_usd": "0.000000000000",
+            "actual_cost_usd": "0.000000000000",
+            "actual_cost_status": "complete",
+            "actual_cost_source": "local",
+            "cost_status": "complete",
+            "pricing_source": "local"
+          }
+        },
+        {
+          "node": {
+            "id": "prompt_writer",
+            "kind": "llm",
+            "modelRef": "prompt-writer",
+            "params": {
+              "max_completion_tokens": 300,
+              "reasoning": {
+                "effort": "none"
+              }
+            },
+            "promptTemplate": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: {{input.description}}"
+          },
+          "model_snapshot": {
+            "alias": "prompt-writer",
+            "provider": "openrouter",
+            "modelId": "openai/gpt-6-luna",
+            "inputProfile": "openrouter-chat-text-v1",
+            "defaults": {
+              "max_completion_tokens": 300,
+              "reasoning": {
+                "effort": "none"
+              }
+            },
+            "enabled": true,
+            "pricing": {
+              "currency": "USD",
+              "unit": "tokens",
+              "inputPerMillion": "0.10",
+              "outputPerMillion": "0.50",
+              "source": "OpenRouter public model metadata; verify before live demo",
+              "updatedAt": "2026-10-10T00:00:00Z"
+            }
+          },
+          "status": "succeeded",
+          "input": {
+            "text": "Ahşap saplı, mat mavi seramik kahve kupası."
+          },
+          "output": {
+            "prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects."
+          },
+          "rendered_prompt": "Write one English image generation prompt for a clean studio product photograph. Preserve the product details, use a plain background, and avoid lettering or logos. Return only the prompt. Product: Ahşap saplı, mat mavi seramik kahve kupası.",
+          "started_at": "2026-10-11T13:12:10.105194441Z",
+          "finished_at": "2026-10-11T13:12:12.247862337Z",
+          "deadline_at": "2026-10-11T13:14:10.105194441Z",
+          "duration_ms": 2142,
+          "attempts": [
+            {
+              "attempt": 1,
+              "phase": "succeeded",
+              "started_at": "2026-10-11T13:12:10.105194441Z",
+              "finished_at": "2026-10-11T13:12:12.247862337Z",
+              "duration_ms": 2142,
+              "provider_request_ref": "957efe9f-0b2e-4aef-a221-07531bb66713"
+            }
+          ],
+          "provider_requests": [
+            {
+              "id": "957efe9f-0b2e-4aef-a221-07531bb66713",
+              "provider_request_id": "gen-1791724330-VzRw2gWX6NozFJbhqaTE",
+              "provider": "openrouter",
+              "requested_model_id": "openai/gpt-6-luna",
+              "actual_model_id": "openai/gpt-6-luna",
+              "model_identity_source": "provider_response",
+              "phase": "succeeded",
+              "response": {
+                "id": "gen-1791724330-VzRw2gWX6NozFJbhqaTE",
+                "model": "openai/gpt-6-luna",
+                "usage": {
+                  "cost": 3.98E-05,
+                  "is_byok": false,
+                  "cost_details": {
+                    "upstream_inference_cost": 3.98E-05,
+                    "upstream_inference_prompt_cost": 5.8E-06,
+                    "upstream_inference_completions_cost": 3.4E-05
+                  },
+                  "total_tokens": 126,
+                  "prompt_tokens": 58,
+                  "completion_tokens": 68,
+                  "prompt_tokens_details": {
+                    "audio_tokens": 0,
+                    "video_tokens": 0,
+                    "cached_tokens": 0,
+                    "cache_write_tokens": 0
+                  },
+                  "completion_tokens_details": {
+                    "audio_tokens": 0,
+                    "image_tokens": 0,
+                    "reasoning_tokens": 0
+                  }
+                },
+                "object": "chat.completion",
+                "choices": [
+                  {
+                    "index": 0,
+                    "message": {
+                      "role": "assistant",
+                      "content": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects.",
+                      "refusal": null,
+                      "reasoning": null
+                    },
+                    "logprobs": null,
+                    "finish_reason": "stop",
+                    "native_finish_reason": "completed"
+                  }
+                ],
+                "created": 1791724330,
+                "provider": "OpenAI",
+                "service_tier": "default",
+                "system_fingerprint": null
+              },
+              "usage": {
+                "completion_tokens": 68,
+                "completion_tokens_details": {
+                  "audio_tokens": 0,
+                  "image_tokens": 0,
+                  "reasoning_tokens": 0
+                },
+                "cost": 3.98E-05,
+                "cost_details": {
+                  "upstream_inference_completions_cost": 3.4E-05,
+                  "upstream_inference_cost": 3.98E-05,
+                  "upstream_inference_prompt_cost": 5.8E-06
+                },
+                "is_byok": false,
+                "prompt_tokens": 58,
+                "prompt_tokens_details": {
+                  "audio_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "cached_tokens": 0,
+                  "video_tokens": 0
+                },
+                "total_tokens": 126
+              },
+              "pricing_snapshot": {
+                "currency": "USD",
+                "unit": "tokens",
+                "inputPerMillion": "0.10",
+                "outputPerMillion": "0.50",
+                "source": "OpenRouter public model metadata; verify before live demo",
+                "updatedAt": "2026-10-10T00:00:00Z"
+              },
+              "cost": {
+                "estimated_cost_usd": "0.000039800000",
+                "reported_cost_usd": "0.000039800000",
+                "actual_cost_usd": "0.000039800000",
+                "actual_cost_status": "complete",
+                "actual_cost_source": "openrouter usage.cost",
+                "cost_status": "complete",
+                "pricing_source": "OpenRouter public model metadata; verify before live demo"
+              },
+              "billing": {
+                "checks": 0
+              },
+              "created_at": "2026-10-11T13:12:10.105194441Z",
+              "finished_at": "2026-10-11T13:12:12.247862337Z"
+            }
+          ],
+          "cost": {
+            "estimated_cost_usd": "0.000039800000",
+            "reported_cost_usd": "0.000039800000",
+            "actual_cost_usd": "0.000039800000",
+            "actual_cost_status": "complete",
+            "cost_status": "complete"
+          }
+        },
+        {
+          "node": {
+            "id": "render",
+            "kind": "image",
+            "modelRef": "flux-schnell",
+            "params": {
+              "image_size": {
+                "height": 512,
+                "width": 512
+              },
+              "num_images": 1
+            }
+          },
+          "model_snapshot": {
+            "alias": "flux-schnell",
+            "provider": "fal",
+            "modelId": "fal-ai/flux/schnell",
+            "inputProfile": "fal-text-to-image-v1",
+            "defaults": {
+              "image_size": {
+                "height": 512,
+                "width": 512
+              },
+              "num_images": 1,
+              "num_inference_steps": 4
+            },
+            "enabled": true,
+            "pricing": {
+              "currency": "USD",
+              "unit": "megapixel",
+              "unitPrice": "0.003",
+              "source": "fal public model page; rounded up to one megapixel",
+              "updatedAt": "2026-10-10T00:00:00Z"
+            }
+          },
+          "status": "waiting_provider",
+          "input": {
+            "prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects."
+          },
+          "rendered_prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects.",
+          "started_at": "2026-10-11T13:21:04.606542458Z",
+          "deadline_at": "2026-10-11T13:31:04.606542458Z",
+          "duration_ms": 0,
+          "attempts": [
+            {
+              "attempt": 1,
+              "phase": "waiting_provider",
+              "started_at": "2026-10-11T13:21:04.606542458Z",
+              "duration_ms": 0,
+              "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1"
+            }
+          ],
+          "provider_requests": [
+            {
+              "id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "provider_request_id": "01a12b1f-c88d-73a2-85f1-cce572dc075b",
+              "provider": "fal",
+              "requested_model_id": "fal-ai/flux/schnell",
+              "actual_model_id": "fal-ai/flux/schnell",
+              "model_identity_source": "endpoint",
+              "phase": "waiting_provider",
+              "status_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/status",
+              "response_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b",
+              "response": {
+                "logs": null,
+                "status": "IN_QUEUE",
+                "metrics": {},
+                "cancel_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/cancel",
+                "request_id": "01a12b1f-c88d-73a2-85f1-cce572dc075b",
+                "status_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/status",
+                "response_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b",
+                "queue_position": 0,
+                "user_queued_count": 1,
+                "user_queue_position": 0
+              },
+              "pricing_snapshot": {
+                "currency": "USD",
+                "unit": "megapixel",
+                "unitPrice": "0.003",
+                "source": "fal public model page; rounded up to one megapixel",
+                "updatedAt": "2026-10-10T00:00:00Z"
+              },
+              "cost": {
+                "estimated_cost_usd": null,
+                "reported_cost_usd": null,
+                "actual_cost_usd": null,
+                "actual_cost_status": "pending",
+                "cost_status": "partial"
+              },
+              "billing": {
+                "checks": 0
+              },
+              "created_at": "2026-10-11T13:21:04.606542458Z"
+            }
+          ],
+          "cost": {
+            "estimated_cost_usd": null,
+            "reported_cost_usd": null,
+            "actual_cost_usd": null,
+            "actual_cost_status": "pending",
+            "cost_status": "partial"
+          }
+        },
+        {
+          "node": {
+            "id": "output",
+            "kind": "output"
+          },
+          "status": "pending",
+          "duration_ms": 0,
+          "attempts": [],
+          "provider_requests": [],
+          "cost": {
+            "estimated_cost_usd": "0.000000000000",
+            "reported_cost_usd": "0.000000000000",
+            "actual_cost_usd": "0.000000000000",
+            "actual_cost_status": "complete",
+            "actual_cost_source": "local",
+            "cost_status": "complete",
+            "pricing_source": "local"
+          }
+        }
+      ],
+      "cost": {
+        "estimated_cost_usd": "0.000039800000",
+        "reported_cost_usd": "0.000039800000",
+        "actual_cost_usd": null,
+        "actual_cost_status": "pending",
+        "cost_status": "partial"
+      },
+      "initial_estimate": {
+        "workflow_revision": 1,
+        "created_at": "2026-10-11T12:58:12.444399409Z",
+        "nodes": [
+          {
+            "node_id": "input",
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            },
+            "assumptions": []
+          },
+          {
+            "node_id": "prompt_writer",
+            "model_id": "openai/gpt-6-luna",
+            "cost": {
+              "estimated_cost_usd": "0.000157700000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "OpenRouter public model metadata; verify before live demo"
+            },
+            "assumptions": [
+              "Girdi için yaklaşık 4 karakter/token + 16 mesaj tokenı; çıktı için max_completion_tokens. Kesin üst sınır değildir; tek deneme, retry hariç."
+            ]
+          },
+          {
+            "node_id": "render",
+            "model_id": "fal-ai/flux/schnell",
+            "cost": {
+              "estimated_cost_usd": "0.003000000000",
+              "reported_cost_usd": null,
+              "actual_cost_usd": null,
+              "actual_cost_status": "pending",
+              "cost_status": "complete",
+              "pricing_source": "fal public model page; rounded up to one megapixel"
+            },
+            "assumptions": [
+              "Katalog fiyatı × seçilen görsel boyutu; tek üretim, retry hariç."
+            ]
+          },
+          {
+            "node_id": "output",
+            "cost": {
+              "estimated_cost_usd": "0.000000000000",
+              "reported_cost_usd": "0.000000000000",
+              "actual_cost_usd": "0.000000000000",
+              "actual_cost_status": "complete",
+              "actual_cost_source": "local",
+              "cost_status": "complete",
+              "pricing_source": "local"
+            },
+            "assumptions": []
+          }
+        ],
+        "cost": {
+          "estimated_cost_usd": "0.003157700000",
+          "reported_cost_usd": "0.000000000000",
+          "actual_cost_usd": null,
+          "actual_cost_status": "pending",
+          "cost_status": "complete"
+        }
+      }
+    }
+  ],
+  "next_operation": {
+    "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+    "version": 7,
+    "node_id": "render",
+    "attempt": 1,
+    "provider": "fal",
+    "model": "fal-ai/flux/schnell",
+    "action": "pricing",
+    "method": "POST",
+    "url": "https://api.fal.ai/v1/models/pricing/estimate"
+  },
+  "complete": false
+}

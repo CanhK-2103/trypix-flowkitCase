@@ -122,6 +122,7 @@ func TestApprovalPipelineWithLocalHTTPOnly(t *testing.T) {
 					if calls.Load() != before {
 						t.Fatal("automatic extra call")
 					}
+					op = nextOperation(store.run, cfg) // A new wait is durably recorded.
 					a := approval{Operation: op, ID: time.Now().String()}
 					stale := a
 					stale.Operation.Version--

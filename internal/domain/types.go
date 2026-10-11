@@ -150,6 +150,16 @@ type Attempt struct {
 	ProviderRequestRef string     `json:"provider_request_ref,omitempty"`
 	Error              *Failure   `json:"error,omitempty"`
 }
+
+// ApprovalPause is only used by the opt-in local acceptance worker. The
+// production worker keeps its normal wall-clock deadlines.
+type ApprovalPause struct {
+	StartedAt        *time.Time `json:"started_at,omitempty"`
+	OriginalDeadline time.Time  `json:"original_deadline_at"`
+	TotalMS          int64      `json:"total_ms"`
+	Source           string     `json:"source"`
+}
+
 type NodeRun struct {
 	Node           Node              `json:"node"`
 	Model          *Model            `json:"model_snapshot,omitempty"`
@@ -160,6 +170,7 @@ type NodeRun struct {
 	StartedAt      *time.Time        `json:"started_at,omitempty"`
 	FinishedAt     *time.Time        `json:"finished_at,omitempty"`
 	DeadlineAt     *time.Time        `json:"deadline_at,omitempty"`
+	ApprovalPause  *ApprovalPause    `json:"approval_pause,omitempty"`
 	NextRetryAt    *time.Time        `json:"next_retry_at,omitempty"`
 	DurationMS     int64             `json:"duration_ms"`
 	Attempts       []Attempt         `json:"attempts"`
