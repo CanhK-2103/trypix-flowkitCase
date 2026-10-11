@@ -105,6 +105,9 @@ try {
   assert.equal(rootRedirect.headers.location, "/auth/login");
   const loginPage = await request("/auth/login", { authenticated: false });
   assert.equal(loginPage.status, 200);
+  // HTTP clients set Origin explicitly, unlike native browser form posts.
+  // Check the effective edge header too: no-referrer would turn those into null.
+  assert.equal(loginPage.headers["referrer-policy"], "same-origin");
   assert.equal((loginPage.data.match(/<input/g) ?? []).length, 1);
   assert(!loginPage.data.includes("username"));
   for (const route of ["/models", "/workflows", "/runs", "/health/ready", "/artifacts/test"]) {
@@ -138,6 +141,7 @@ try {
   assert.equal((await request("/health/ready")).status, 200);
   const page = await request("/");
   assert.equal(page.status, 200);
+  assert.equal(page.headers["referrer-policy"], "same-origin");
   assert.match(page.data, /<title>FlowKit/);
   const asset = page.data.match(/src="(\/assets\/[^\"]+\.js)"/);
   assert(asset);

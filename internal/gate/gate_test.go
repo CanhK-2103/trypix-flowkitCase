@@ -93,6 +93,9 @@ func TestProtectedPathsAndPasswordForm(t *testing.T) {
 	if form.Header().Get("Cache-Control") != "no-store" || !strings.Contains(form.Header().Get("Content-Security-Policy"), "frame-ancestors 'none'") {
 		t.Fatal("missing login protection headers")
 	}
+	if form.Header().Get("Referrer-Policy") != "same-origin" {
+		t.Fatal("native login form must preserve its same-origin Origin header")
+	}
 	wrong := call(g, "POST", "/auth/login", "password=wrong", "https://flowkit.test", nil)
 	if wrong.Code != 401 || len(wrong.Result().Cookies()) != 0 || strings.Contains(wrong.Body.String(), "value=\"wrong\"") {
 		t.Fatal("invalid password accepted or reflected")
@@ -113,6 +116,9 @@ func TestSessionProxyExpiryAndRotation(t *testing.T) {
 	g.ServeHTTP(w, r)
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"path":"/workflows"`) || w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("authenticated proxy failed")
+	}
+	if call(g, "GET", "/", "", "", cookie).Header().Get("Referrer-Policy") != "same-origin" {
+		t.Fatal("native dashboard logout form must preserve its same-origin Origin header")
 	}
 	restarted, err := New(cfg, g.log)
 	if err != nil {

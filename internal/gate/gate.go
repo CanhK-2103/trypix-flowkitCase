@@ -126,7 +126,9 @@ func (g *Gate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Add("Vary", "Cookie")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Referrer-Policy", "no-referrer")
+	// Native form POSTs use Origin: null under no-referrer, which our strict
+	// origin check correctly rejects. Preserve same-origin form provenance.
+	w.Header().Set("Referrer-Policy", "same-origin")
 	switch r.URL.Path {
 	case "/auth/login":
 		g.login(w, r)

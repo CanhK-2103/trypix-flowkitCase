@@ -33,7 +33,9 @@
 
 	header {
 		X-Content-Type-Options nosniff
-		Referrer-Policy no-referrer
+		# Keep native login/logout form origins; suppress external referrers.
+		# Apply after the upstream response to emit a single policy value.
+		>Referrer-Policy same-origin
 	}
 	# The private gate requires a signed session on every dashboard/API/asset route.
 	reverse_proxy gate:8080 {
