@@ -644,7 +644,7 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 - [x] TanStack Query aktif run'ı 2 sn, terminal fakat billing bekleyen run'ı 15 sn poll ediyor; maliyet tamamlanınca/erişilemeyince duruyor. Ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
 - [x] CodeMirror JSON sözdizimi hatalarını ve API bulgularını gösteriyor; backend kaydetme doğrulaması zorunlu, kaydedilmemiş metin query yenilemesinde korunuyor.
 - [x] İlk doğrudan OpenRouter → fal akışı tamamlandı; model/prompt/parametre eşleştirmesi README ve docs/evidence/direct.json ile gerçek kayıtlı. Fal gerçek billing tutarı ayrı canlı kabul bekliyor.
-- [ ] Aynı tanımın FlowKit üzerinden gerçek DB run'ı ve eşleştirmesinin yürütme kanıtı tamamlandı.
+- [x] Aynı tanımın FlowKit üzerinden gerçek DB run'ı ve eşleştirmesinin yürütme kanıtı tamamlandı: a733fb1e-686e-4d78-8386-09ce5953a36a succeeded, birer LLM/image attempt; docs/evidence/flowkit-approved.json. Onay bekleme saati düzeltmesi ayrıca kayıtlı; yeni model kabulü henüz bekliyor.
 - [ ] İki farklı workflow iki farklı kayıtlı görsel modelle gerçekten çalışıyor.
 - [ ] Yeni model ve ikinci workflow yalnızca API verisiyle, restart/deploy/kod değişmeden gerçek sağlayıcıyla çalıştırılmış. Mock HTTP kabulü geçti.
 - [ ] Doğrudan deneme dahil gerçek harcamalar sağlayıcı bazında kayıtlı; fal 5 USD ve OpenRouter 2 USD anahtar sınırları korunmuş.

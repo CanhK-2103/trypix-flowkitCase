@@ -1,18 +1,24 @@
 {
   "session_id": "11df08c8-088b-4074-ac2d-5f5ba8480659",
-  "phase": "awaiting_fal_pricing_approval",
+  "phase": "first_flowkit_run_complete",
   "api_url": "http://localhost:8081",
-  "code_revision": "d597ac0345e9429616d9d7f28bf2296e079ccfaf",
+  "original_code_revision": "d597ac0345e9429616d9d7f28bf2296e079ccfaf",
   "baseline_git_sha": "b049553f2d094fb47f34d1c4159aa66407200e1b",
-  "before_containers": [
+  "original_containers": [
     "9ba1517ef5ade30da6b1f4cfae5133c14f91eb7141fabb0a0588b61f5ea208fe|2026-10-11T12:56:59.28991805Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5",
     "bc78b0d501559a9ae1710b0b5a98e2080f8080f448fcb2c4fbee6f0712c0ed5b|2026-10-11T12:56:59.041746881Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5"
   ],
-  "current_containers": [
-    "9ba1517ef5ade30da6b1f4cfae5133c14f91eb7141fabb0a0588b61f5ea208fe|2026-10-11T12:56:59.28991805Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5",
-    "bc78b0d501559a9ae1710b0b5a98e2080f8080f448fcb2c4fbee6f0712c0ed5b|2026-10-11T12:56:59.041746881Z|sha256:49bbb542f0f61fe4c5c1c873e7058c0adecea579413754e94509dfbe925a50b5"
-  ],
-  "credentialed_provider_calls": 2,
+  "approval_clock_fix": {
+    "code_revision": "fa71a80f97b319c7788b9e6e79e7b661afb091fd",
+    "reason": "Recorded human approval wait excluded from provider budget; no resubmission",
+    "legacy_waiting_since": "2026-10-11T13:21:06.028360866Z",
+    "original_deadline_at": "2026-10-11T13:31:04.606542458Z",
+    "containers_after_fix": [
+      "ef0c586368c7bfbc307ff63fe937d931596ec4689d9285d8759382cfdede4c3b|2026-10-11T13:43:41.582959935Z|sha256:15831a3ffde73a07984d75206ce2441c1a06c122757daa35d244332845713bfb",
+      "9af5b8321c68a9a8469e81ebaf8444794c71710ff6b5f465fc4fb70b96b5c19b|2026-10-11T13:43:41.827099006Z|sha256:15831a3ffde73a07984d75206ce2441c1a06c122757daa35d244332845713bfb"
+    ]
+  },
+  "credentialed_provider_calls": 5,
   "approvals": [
     {
       "approval_id": "user-approved-first-flowkit-completion-a733fb1e",
@@ -50,6 +56,63 @@
         "method": "POST",
         "url": "https://queue.fal.run/fal-ai/flux/schnell"
       },
+      "consumed": true
+    },
+    {
+      "group": "user-approved-first-flowkit-three-reads-a733fb1e",
+      "approval_id": "user-approved-first-flowkit-three-reads-a733fb1e-pricing",
+      "at": "2026-10-11T13:47:29.7998377Z",
+      "user_reply": "onay",
+      "operation": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "version": 8,
+        "node_id": "render",
+        "attempt": 1,
+        "provider": "fal",
+        "model": "fal-ai/flux/schnell",
+        "action": "pricing",
+        "method": "POST",
+        "url": "https://api.fal.ai/v1/models/pricing/estimate"
+      },
+      "expected_additional_generation_cost_usd": "0",
+      "consumed": true
+    },
+    {
+      "group": "user-approved-first-flowkit-three-reads-a733fb1e",
+      "approval_id": "user-approved-first-flowkit-three-reads-a733fb1e-status",
+      "at": "2026-10-11T13:47:46.1865693Z",
+      "user_reply": "onay",
+      "operation": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "version": 11,
+        "node_id": "render",
+        "attempt": 1,
+        "provider": "fal",
+        "model": "fal-ai/flux/schnell",
+        "action": "status",
+        "method": "GET",
+        "url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/status"
+      },
+      "expected_additional_generation_cost_usd": "0",
+      "consumed": true
+    },
+    {
+      "group": "user-approved-first-flowkit-three-reads-a733fb1e",
+      "approval_id": "user-approved-first-flowkit-three-reads-a733fb1e-result",
+      "at": "2026-10-11T13:48:02.4329922Z",
+      "user_reply": "onay",
+      "operation": {
+        "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+        "version": 14,
+        "node_id": "render",
+        "attempt": 1,
+        "provider": "fal",
+        "model": "fal-ai/flux/schnell",
+        "action": "result",
+        "method": "GET",
+        "url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b"
+      },
+      "expected_additional_generation_cost_usd": "0",
       "consumed": true
     }
   ],
@@ -911,14 +974,15 @@
       "input": {
         "description": "Ahşap saplı, mat mavi seramik kahve kupası."
       },
-      "status": "running",
+      "status": "succeeded",
       "request_id": "9facb2c20e3077535338f977803ab586",
       "job_id": 1,
-      "version": 7,
+      "version": 19,
       "created_at": "2026-10-11T12:58:12.444399409Z",
       "started_at": "2026-10-11T12:58:14.814432027Z",
+      "finished_at": "2026-10-11T13:48:09.334430146Z",
       "queue_wait_ms": 2370,
-      "duration_ms": 0,
+      "duration_ms": 2994519,
       "nodes": [
         {
           "node": {
@@ -1162,20 +1226,43 @@
               "updatedAt": "2026-10-10T00:00:00Z"
             }
           },
-          "status": "waiting_provider",
+          "status": "succeeded",
           "input": {
             "prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects."
           },
+          "output": {
+            "image": {
+              "actual_model_id": "fal-ai/flux/schnell",
+              "artifact_id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "content_type": "image/jpeg",
+              "height": 512,
+              "model_identity_source": "endpoint",
+              "node_id": "render",
+              "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+              "size_bytes": 133147,
+              "source_url": "https://v3b.fal.media/files/b/0aadf486/3ixY4uydLV08maJlVc_vT.jpg",
+              "url": "/artifacts/70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "width": 512
+            }
+          },
           "rendered_prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects.",
           "started_at": "2026-10-11T13:21:04.606542458Z",
-          "deadline_at": "2026-10-11T13:31:04.606542458Z",
-          "duration_ms": 0,
+          "finished_at": "2026-10-11T13:48:08.290460501Z",
+          "deadline_at": "2026-10-11T13:58:02.652350966Z",
+          "approval_pause": {
+            "original_deadline_at": "2026-10-11T13:31:04.606542458Z",
+            "total_ms": 1618044,
+            "source": "legacy_request_id_commit_log"
+          },
+          "duration_ms": 1623683,
           "attempts": [
             {
               "attempt": 1,
-              "phase": "waiting_provider",
+              "phase": "succeeded",
               "started_at": "2026-10-11T13:21:04.606542458Z",
-              "duration_ms": 0,
+              "finished_at": "2026-10-11T13:48:08.290460501Z",
+              "duration_ms": 1623683,
               "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1"
             }
           ],
@@ -1187,20 +1274,29 @@
               "requested_model_id": "fal-ai/flux/schnell",
               "actual_model_id": "fal-ai/flux/schnell",
               "model_identity_source": "endpoint",
-              "phase": "waiting_provider",
+              "phase": "succeeded",
               "status_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/status",
               "response_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b",
               "response": {
-                "logs": null,
-                "status": "IN_QUEUE",
-                "metrics": {},
-                "cancel_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/cancel",
-                "request_id": "01a12b1f-c88d-73a2-85f1-cce572dc075b",
-                "status_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b/status",
-                "response_url": "https://queue.fal.run/fal-ai/flux/requests/01a12b1f-c88d-73a2-85f1-cce572dc075b",
-                "queue_position": 0,
-                "user_queued_count": 1,
-                "user_queue_position": 0
+                "seed": 777533063,
+                "images": [
+                  {
+                    "url": "https://v3b.fal.media/files/b/0aadf486/3ixY4uydLV08maJlVc_vT.jpg",
+                    "width": 512,
+                    "height": 512,
+                    "content_type": "image/jpeg"
+                  }
+                ],
+                "prompt": "Clean studio product photograph of a matte blue ceramic coffee mug with a natural wooden handle, clearly showing the smooth ceramic finish and warm wood grain. Isolated against a plain, neutral light background, softly lit with subtle shadows, centered composition, realistic materials, crisp detail. No lettering, logos, props, or extra objects.",
+                "timings": {
+                  "inference": 0.5079714960011188
+                },
+                "has_nsfw_concepts": [
+                  false
+                ]
+              },
+              "usage": {
+                "billable_units": "1"
               },
               "pricing_snapshot": {
                 "currency": "USD",
@@ -1210,24 +1306,26 @@
                 "updatedAt": "2026-10-10T00:00:00Z"
               },
               "cost": {
-                "estimated_cost_usd": null,
+                "estimated_cost_usd": "0.003000000000",
                 "reported_cost_usd": null,
                 "actual_cost_usd": null,
                 "actual_cost_status": "pending",
-                "cost_status": "partial"
+                "cost_status": "complete",
+                "pricing_source": "fal historical_api_price; one call"
               },
               "billing": {
                 "checks": 0
               },
-              "created_at": "2026-10-11T13:21:04.606542458Z"
+              "created_at": "2026-10-11T13:21:04.606542458Z",
+              "finished_at": "2026-10-11T13:48:08.290460501Z"
             }
           ],
           "cost": {
-            "estimated_cost_usd": null,
+            "estimated_cost_usd": "0.003000000000",
             "reported_cost_usd": null,
             "actual_cost_usd": null,
             "actual_cost_status": "pending",
-            "cost_status": "partial"
+            "cost_status": "complete"
           }
         },
         {
@@ -1235,7 +1333,41 @@
             "id": "output",
             "kind": "output"
           },
-          "status": "pending",
+          "status": "succeeded",
+          "input": {
+            "image": {
+              "actual_model_id": "fal-ai/flux/schnell",
+              "artifact_id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "content_type": "image/jpeg",
+              "height": 512,
+              "model_identity_source": "endpoint",
+              "node_id": "render",
+              "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+              "size_bytes": 133147,
+              "source_url": "https://v3b.fal.media/files/b/0aadf486/3ixY4uydLV08maJlVc_vT.jpg",
+              "url": "/artifacts/70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "width": 512
+            }
+          },
+          "output": {
+            "image": {
+              "actual_model_id": "fal-ai/flux/schnell",
+              "artifact_id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "content_type": "image/jpeg",
+              "height": 512,
+              "model_identity_source": "endpoint",
+              "node_id": "render",
+              "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+              "size_bytes": 133147,
+              "source_url": "https://v3b.fal.media/files/b/0aadf486/3ixY4uydLV08maJlVc_vT.jpg",
+              "url": "/artifacts/70266b82-d304-4ef6-80c1-9696e044f5d1",
+              "width": 512
+            }
+          },
+          "started_at": "2026-10-11T13:48:08.372758726Z",
+          "finished_at": "2026-10-11T13:48:08.372809936Z",
           "duration_ms": 0,
           "attempts": [],
           "provider_requests": [],
@@ -1250,12 +1382,28 @@
           }
         }
       ],
+      "output": {
+        "image": {
+          "actual_model_id": "fal-ai/flux/schnell",
+          "artifact_id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+          "content_type": "image/jpeg",
+          "height": 512,
+          "model_identity_source": "endpoint",
+          "node_id": "render",
+          "provider_request_ref": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+          "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+          "size_bytes": 133147,
+          "source_url": "https://v3b.fal.media/files/b/0aadf486/3ixY4uydLV08maJlVc_vT.jpg",
+          "url": "/artifacts/70266b82-d304-4ef6-80c1-9696e044f5d1",
+          "width": 512
+        }
+      },
       "cost": {
-        "estimated_cost_usd": "0.000039800000",
+        "estimated_cost_usd": "0.003039800000",
         "reported_cost_usd": "0.000039800000",
         "actual_cost_usd": null,
         "actual_cost_status": "pending",
-        "cost_status": "partial"
+        "cost_status": "complete"
       },
       "initial_estimate": {
         "workflow_revision": 1,
@@ -1330,14 +1478,15 @@
   ],
   "next_operation": {
     "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
-    "version": 7,
-    "node_id": "render",
-    "attempt": 1,
-    "provider": "fal",
-    "model": "fal-ai/flux/schnell",
-    "action": "pricing",
-    "method": "POST",
-    "url": "https://api.fal.ai/v1/models/pricing/estimate"
+    "version": 19,
+    "node_id": "",
+    "attempt": 0,
+    "provider": "",
+    "model": "",
+    "action": "",
+    "method": "",
+    "url": ""
   },
-  "complete": false
+  "complete": true,
+  "runtime_model_workflow_acceptance_complete": false
 }

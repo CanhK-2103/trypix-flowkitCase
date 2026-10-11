@@ -66,15 +66,20 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 - HTTP 403: “This API key is not permitted to perform this action.”; süre 475 ms. Mevcut anahtarın faturalama okuma erişimi olmadığı canlı olarak görüldü. Resmi endpoint BILLING/FULL preset veya `billing:usage:read`, `auth:keys:read`, `account:users:read` yetkileri gerektiriyor.
 - Güncel gerçek maliyet durumu unavailable; fal actual ve gerçek toplam null. Üretim complete olarak kaldı. Toplam beş anahtarlı HTTP çağrısı; ilave model üretimi veya retry yapılmadı. Anahtarsız kanıt erişim hatasını da içeriyor.
 
-## Henüz doğrulanmamış canlı kabul
+## FlowKit canlı kabul — tamamlanan ve bekleyen
 
 Çağrı başına onaylı kabul hazırlığı tamam: ayrı boş `flowkit-acceptance` ortamında API ve kontrollü River worker çalışıyor (dashboard 8081, yerel kontrol 8082). Yalnızca ilk iki model ve ürün workflow'u API'den eklendi. Başlangıçta provider request/onaylı sağlayıcı çağrısı 0 olarak doğrulandı. `d597ac0` commit'inin backend/dashboard/compose CI kontrolleri başarılı.
 
 Kullanıcının ayrı onayıyla run `a733fb1e-686e-4d78-8386-09ce5953a36a` içindeki LLM adımı canlı tamamlandı: actual model `openai/gpt-6-luna`, request `gen-1791724330-VzRw2gWX6NozFJbhqaTE`, 1 attempt, 2142 ms, 58 input + 68 output token; gerçek `usage.cost` ve DB kaydı `0.000039800000 USD`. Başlangıç tahmini `0.003157700000 USD` korundu. API/worker container kimlikleri ve başlangıç zamanları aynı.
 
-Sonraki ayrı onayla fal Schnell submit (512×512, 1 görsel, 4 step) yapıldı: request `01a12b1f-c88d-73a2-85f1-cce572dc075b`, 1 attempt, HTTP 200; request ID ve queue URL'leri 1421 ms içinde `waiting_provider` fazıyla DB'ye commit edildi, version 7 doğrudan DB sorgusunda doğrulandı. Toplam 2 credentialed HTTP çağrısı; pricing/status/result/billing henüz yapılmadı. Run tamamlanmadı, fal actual ve gerçek toplam null/pending. [Kısmi canlı kanıt](evidence/flowkit-approved.json) fal tamamlanma kanıtı değildir; kalan her credentialed işlem açık onay bekliyor.
+Sonraki ayrı onayla fal Schnell submit (512×512, 1 görsel, 4 step) yapıldı: request `01a12b1f-c88d-73a2-85f1-cce572dc075b`, 1 attempt, HTTP 200; request ID ve queue URL'leri 1421 ms içinde `waiting_provider` fazıyla DB'ye commit edildi, version 7 doğrudan DB sorgusunda doğrulandı.
 
-- Aynı modeller/prompt/parametrelerle FlowKit run'ı.
+Üç okuma ayrıca onaylandı: pricing POST başarılı/0.003 USD tahmini; tek status GET COMPLETED, tek result GET geçerli görsel. Onay beklenirken 600 saniyelik duvar saati deadline'ı aşıldığı için demo worker'ın insan bekleme saati düzeltildi; API/worker bu düzeltme sırasında yeniden oluşturuldu. Özgün deadline `2026-10-11T13:31:04.606542458Z`, kaydedilen insan bekleme süresi 1618044 ms; aynı request ID, tek image attempt ve tek submit korundu. Bu düzeltme runtime model kabulünün restart olmadan gerçekleştiği kanıtı olarak sunulmaz.
+
+Run succeeded; input/LLM/image/output succeeded. Kalıcı artifact `70266b82-d304-4ef6-80c1-9696e044f5d1`, 512×512 JPEG/133147 byte, model `fal-ai/flux/schnell`; gateway GET HTTP 200. DB'de birer LLM/image attempt, bir artifact ve değişmemiş başlangıç tahmini `0.003157700000` doğrulandı. Çalıştırma tahmini `0.003039800000`, OpenRouter actual `0.000039800000`; fal actual/actual total null/pending. Toplam 5 credentialed çağrı (completion, submit, pricing, status, result); ek polling/retry/billing yapılmadı. [Tamamlanan ilk run kanıtı](evidence/flowkit-approved.json).
+
+Kalan canlı kabul:
+
 - Schnell → API ile Dev kaydı → modelRef güncelleme → gerçek Dev run'ı; servis restart olmadan.
 - İkinci workflow'un gerçek Dev run'ı.
 - Fal gerçek harcamaları ve kalan canlı run'ların fiyat/maliyet kayıtları; ilk OpenRouter yanıt tutarı yukarıda doğrulandı.

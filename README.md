@@ -2,7 +2,7 @@
 
 JSON olarak tanımlanan doğrusal AI workflow'larını kaydeden, doğrulayan ve arka planda çalıştıran küçük bir backend platformu. Go API + ayrı River worker + PostgreSQL; React dashboard yalnızca HTTP API kullanır.
 
-**Durum:** uygulama ve mock testler mevcut; ilk doğrudan OpenRouter → fal denemesi gerçek sağlayıcılarla tamamlandı. Fal billing sorgusu mevcut anahtarın yetkisi nedeniyle 403 döndü. FlowKit üzerinden canlı run'lar ve runtime model/workflow kabulü kullanıcı onaylarıyla sıradaki adımlar; [kanıt ve kalan kontroller](docs/ACCEPTANCE.md). Çıktı kalitesi değerlendirmesine yönelik ek üretim yapılmaz.
+**Durum:** uygulama ve mock testler mevcut; ilk doğrudan OpenRouter → fal denemesi ve aynı akışın FlowKit üzerinden gerçek run'ı tamamlandı. Fal pricing sorgusu başarılı; billing sorgusu mevcut anahtarın yetkisi nedeniyle 403 döndü. Runtime Dev model/ikinci workflow kabulü kullanıcı onaylarıyla sıradaki adımlar; [kanıt ve kalan kontroller](docs/ACCEPTANCE.md). Çıktı kalitesi değerlendirmesine yönelik ek üretim yapılmaz.
 
 Repository: [CanhK-2103/trypix-flowkitCase](https://github.com/CanhK-2103/trypix-flowkitCase). [Dashboard görünümü](docs/dashboard.jpg).
 
@@ -142,7 +142,11 @@ Komut örnek workflow/model dosyalarını kullanır; her aşamayı ignored `evid
 | Queue ID / status / result | provider_requests kalıcı fazları |
 | Görsel URL, gerçek model | artifact + run output/provenance |
 
-İkinci workflow etkinlik fikrinden dikey afiş üretir; `fal-ai/flux/dev`, 28 steps, 512×768. Uyumlu iki modelin farklı defaults'u katalog verisidir. Gerçek örnek run kimlikleri ve harcamalar henüz üretilmedi; [kabul durumu](docs/ACCEPTANCE.md).
+İlk gerçek FlowKit run'ı `a733fb1e-686e-4d78-8386-09ce5953a36a` succeeded: birer LLM/image attempt, fal request `01a12b1f-c88d-73a2-85f1-cce572dc075b`, 512×512 JPEG (133147 byte), producer model `fal-ai/flux/schnell`. Artifact `/artifacts/70266b82-d304-4ef6-80c1-9696e044f5d1` API'den HTTP 200 ile okundu. Başlangıç tahmini 0.003157700000 USD korundu; çalıştırma tahmini 0.003039800000 USD, OpenRouter gerçek maliyeti 0.000039800000 USD. Fal actual ve actual total null/pending; billing çağrısı yapılmadı. [Canlı run/API kanıtı](docs/evidence/flowkit-approved.json).
+
+Çağrı başına onaylı demoda insan bekleyişi ilk görsel deadline'ını aştı. Demo aracı düzeltildi; özgün deadline ve bekleme süresi DB'de korunarak aynı request ID'den, ek üretim göndermeden devam edildi. Bu düzeltme API/worker restart içerir ve runtime model ekleme kanıtı olarak sunulmaz. Yeni model demosunun baseline'ı ilk başarılı run sonrasında alınır.
+
+İkinci workflow etkinlik fikrinden dikey afiş üretir; `fal-ai/flux/dev`, 28 steps, 512×768. Uyumlu iki modelin farklı defaults'u katalog verisidir. Dev model değişimi ve ikinci workflow'un gerçek run'ları henüz tamamlanmadı; [kabul durumu](docs/ACCEPTANCE.md).
 
 PowerShell ile doğrudan denemeden sonra `./tools/live-demo.ps1`; manuel CLI: `go run ./cmd/acceptance -url http://localhost:8081 -project flowkit-acceptance`. Komut üç FlowKit run'ını (Schnell, model değişimi Dev, ikinci workflow Dev), bütün mutasyon HTTP istek/yanıtlarını ve önce/sonra container ID/StartedAt/image/Git SHA bilgisini `evidence/local/acceptance.json` dosyasına kaydeder. İlk çalıştırma boş ayrı DB ister. Yarıda kalırsa `-resume` aynı idempotency key'leri kullanır; tamamlanmış demo tekrar üretim yapmaz. Bütçe kontrolü doğrudan denemeyi de toplamda sayar ve sonraki çağrının üç denemesini rezerve eder.
 
