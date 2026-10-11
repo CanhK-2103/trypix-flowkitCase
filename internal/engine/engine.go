@@ -284,6 +284,8 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 			if err := e.save(ctx, r); err != nil {
 				return 0, err
 			}
+			// Pricing and queue status are separate durable worker steps.
+			return time.Millisecond, nil
 		}
 		state, f := e.Provider.Status(remoteCtx, ticket)
 		if f != nil {

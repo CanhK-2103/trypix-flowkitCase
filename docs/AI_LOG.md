@@ -71,3 +71,11 @@
 - Kullanıcı bilgisayarı kapatıp Docker Desktop'ı yeniden açtıktan sonra sistemin aktif olmasını istedi. PostgreSQL container'ı exited, API/worker restart döngüsünde ve gateway 502 durumundaydı; veritabanında restart politikası olmadığı görüldü.
 - Gerçek çağrılar için verilen onay sınırı korunarak önce worker açıkça durduruldu. Mevcut volume'lar korunarak yalnızca db/init/api/bootstrap/dashboard servisleri başlatıldı; API ready ve dashboard HTTP 200 doğrulandı. Sağlayıcı isteği veya run başlatılmadı.
 - PostgreSQL'e `restart: unless-stopped` eklendi ve çalışan container'ın restart politikası veriyi/container'ı yeniden oluşturmadan güncellendi. Compose konfigürasyonu doğrulandı; README'de worker kapalı yönetim başlangıcı ve kuyrukta bekleme davranışı belgelendi.
+
+## 2026-10-11 — çağrı başına onaylı FlowKit kabul hazırlığı
+
+- Kullanıcı kalan canlı kabul senaryolarına geçilmesini istedi; önceki her anahtar kullanımından önce ayrı onay şartı korundu. Standart worker pricing, polling, retry ve billing çağrılarını otomatik yaptığından tek completion onayıyla başlatılmadı.
+- Yerel `cmd/approved-worker` kabul aracı aynı River job/Engine/PostgreSQL akışını kullanacak şekilde hazırlandı. Run'lar açıkça track edilir, credentialed çağrı öncesinde run sürümü/node/model/operation eşleşen tek kullanımlık onay beklenir. Onaysız beklemek domain attempt oluşturmaz; yeniden gönderim/polling de ayrı onay ister. Billing reconciler bu araçta çalışmaz.
+- Fal historical pricing ve status tek Engine.Step içinde arka arkaya çağrılıyordu. Pricing checkpoint'i sonrasında River'a dönecek şekilde iki ayrı kalıcı adıma ayrıldı; request ID'nin polling/pricing öncesi commit edilme garantisi korundu.
+- Yerel HTTP fixture'larıyla onaysız çağrı, yanlış/eski/tekrarlı onay, tek onayda tek HTTP çağrısı, 503 sonrası ayrı onayla retry ve tam başarılı Engine run'ı test edildi. HTTP/1 fresh connections, redirect engeli ve tek çağrı transport guard'ı ek isteği engelliyor.
+- `gofmt`, tüm Go testleri ve dedicated PostgreSQL entegrasyon testleri, `go vet`, sekiz frontend testi, typecheck/build ve sqlc tekrar üretim kontrolü başarılı. Son transport ayarı sonrasında ilgili komut test/vet kontrolü tekrar geçti. Mock kanıtları canlı kabul sayılmadı; bu hazırlıkta gerçek sağlayıcı çağrısı yapılmadı.

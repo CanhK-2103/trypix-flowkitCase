@@ -35,6 +35,8 @@ docker compose up -d --wait db init api bootstrap dashboard
 
 Bu durumda workflow düzenleme, listeleme ve maliyet tahmini kullanılabilir; başlatılan run'lar worker açılana kadar kuyrukta bekler. Worker'ı anahtarlarla açmak kuyruktaki run'ları ve bekleyen faturalama sorgularını otomatik yürütebilir; kapsam onaylanmadan `docker compose up` ile worker'ı başlatmayın.
 
+Her gerçek çağrıya ayrı onay gereken bu oturum için [kontrollü kabul demosu](docs/APPROVED_DEMO.md) ve `compose.approval.yaml` hazırlanmıştır. Araç aynı River/Engine/DB akışını kullanır; normal worker kapalıyken açıkça onaylanan tek isteği yürütür. Model/workflow eklerken API ve kontrollü worker yeniden başlatılmaz.
+
 ## Mimari ve çalıştırma
 
 ```mermaid

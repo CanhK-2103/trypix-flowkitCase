@@ -1,0 +1,19 @@
+# Local acceptance override. The regular worker must remain stopped.
+services:
+  approved-worker:
+    image: flowkit-backend:local
+    build: .
+    entrypoint: [approved-worker]
+    environment:
+      DATABASE_URL: postgres://flowkit:flowkit@db:5432/flowkit?sslmode=disable
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      FAL_KEY: ${FAL_KEY:-}
+      ARTIFACT_DIR: /data/artifacts
+      LOG_LEVEL: info
+    volumes:
+      - artifacts:/data/artifacts
+    ports: ["127.0.0.1:8082:8082"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+    # Approval grants are memory-only: restarting requires fresh approval.
+    restart: "no"
