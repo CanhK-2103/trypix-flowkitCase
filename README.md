@@ -24,7 +24,9 @@ Init uygulama/River migration'larını uygular. Bootstrap örnek JSON'ları **AP
 DASHBOARD_PORT=8081 LOAD_EXAMPLES=false docker compose -p flowkit-acceptance up
 ```
 
-Normal kurulumu yeniden başlatmanız veya verilerini silmeniz gerekmez. Yerel gateway yalnızca 127.0.0.1'e bağlıdır. İsteğe bağlı VPS kurulumu için [deployment yönergesi](deploy/README.md) ve `compose.production.yaml` bulunur: Caddy HTTPS + bütün yollar için Basic Auth, özel DB parolası ve açıkça başlatılan worker. Production ayarları ayrı, anahtarsız yerel Compose testinde doğrulandı; domain aktivasyonu ve canlı TLS kontrolü tamamlanmadan cloud deployment doğrulanmış sayılmaz.
+Normal kurulumu yeniden başlatmanız veya verilerini silmeniz gerekmez. Yerel gateway yalnızca 127.0.0.1'e bağlıdır. İsteğe bağlı VPS kurulumu için [deployment yönergesi](deploy/README.md) ve `compose.production.yaml` bulunur: Caddy HTTPS + bütün yollar için Basic Auth, özel DB parolası ve açıkça başlatılan worker. Production ayarları ayrı, anahtarsız yerel Compose/CI testinde doğrulandı.
+
+Parola korumalı yönetim paneli: **https://flowkit.canhurkurtoglu.com**. Cloudflare DNS, public Let’s Encrypt sertifikası/hostname doğrulaması, HTTPS yönlendirmesi, yetkisiz 401/yetkili dashboard/API 200 ve iki seed workflow [deployment kanıtında](docs/evidence/deployment.json). Üretim worker'ı cloud'da kapalı, provider anahtarları boş; bu kurulum ek ücretli üretim yapmaz. Değerlendirici erişim parolası ayrıca paylaşılır, repoda bulunmaz. Önceki gerçek run'lar/medya yerel kabul DB'sindedir; cloud yeni DB ile açılmıştır.
 
 Docker Desktop yeniden açıldığında veritabanı, API ve dashboard `unless-stopped` politikasıyla geri gelir; elle durdurulmuş servisler elle açılır. Her sağlayıcı çağrısını ayrıca onaylayacağınız bir oturumda worker'ı kapalı tutarak yalnızca yönetim servislerini açın:
 

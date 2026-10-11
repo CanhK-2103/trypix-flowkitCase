@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-10-11T18:58:12.265901+00:00",
+  "url": "https://flowkit.canhurkurtoglu.com",
+  "origin_ip": "185.237.14.198",
+  "tls": {
+    "validation": "system-trust-and-hostname",
+    "issuer": [
+      [
+        [
+          "countryName",
+          "US"
+        ]
+      ],
+      [
+        [
+          "organizationName",
+          "Let's Encrypt"
+        ]
+      ],
+      [
+        [
+          "commonName",
+          "YE2"
+        ]
+      ]
+    ],
+    "not_before": "Oct 11 17:58:59 2026 GMT",
+    "not_after": "Jan  9 17:58:58 2027 GMT",
+    "subject_alt_name": [
+      [
+        "DNS",
+        "flowkit.canhurkurtoglu.com"
+      ]
+    ]
+  },
+  "http_redirect": 308,
+  "unauthenticated_routes": [
+    {
+      "path": "/",
+      "status": 401
+    },
+    {
+      "path": "/models",
+      "status": 401
+    },
+    {
+      "path": "/workflows",
+      "status": 401
+    },
+    {
+      "path": "/runs",
+      "status": 401
+    },
+    {
+      "path": "/health/ready",
+      "status": 401
+    },
+    {
+      "path": "/artifacts/test",
+      "status": 401
+    }
+  ],
+  "unauthenticated_mutation": 401,
+  "wrong_credentials": 401,
+  "unauthenticated_asset": 401,
+  "authenticated_dashboard_api_asset": 200,
+  "models": [
+    "flux-dev",
+    "flux-schnell",
+    "prompt-writer"
+  ],
+  "workflow_count": 2,
+  "provider_calls": 0
+}

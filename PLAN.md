@@ -660,7 +660,7 @@ Uygulama, PostgreSQL/River entegrasyon testleri, Docker kurulumu ve canlı üret
 
 ## 21. İsteğe bağlı VPS deployment
 
-Mevcut Compose'un üzerinde Caddy HTTPS/Basic Auth, özel DB parolası, dışarı kapalı DB/API/dashboard portları ve onay kapsamı alınana kadar kapalı worker kullanılır. `compose.production.yaml`, `deploy/README.md` ve anahtarsız `tools/check-production.mjs` hazır ve yerel/CI olarak doğrulandı. Sunucuya SSH erişimi, Docker kurulumu, 8852cd3 kodunun build/startup'ı, API readiness, iki seed workflow ve kapalı backend portları doğrulandı. Cloudflare domain aktivasyonu, public sertifika ve yetkili cloud smoke henüz bekliyor; sağlayıcı çağrıları ayrı kullanıcı onayı gerektirir. Yerel tek komut kurulumu ve veri tabanlı workflow/model kabulü değişmez.
+Mevcut Compose'un üzerinde Caddy HTTPS/Basic Auth, özel DB parolası, dışarı kapalı DB/API/dashboard portları ve onay kapsamı alınana kadar kapalı worker kullanılır. `compose.production.yaml`, `deploy/README.md` ve anahtarsız `tools/check-production.mjs` hazır ve yerel/CI olarak doğrulandı. Sunucuya SSH erişimi, Docker kurulumu, 8852cd3 kodunun build/startup'ı, API readiness, iki seed workflow ve kapalı backend portları doğrulandı. Cloudflare domain aktivasyonu, public Let’s Encrypt sertifikası, normal DNS üzerinden HTTPS 401 ve yetkili cloud dashboard/API/static 200 doğrulandı; docs/evidence/deployment.json. Cloud yeni DB ile açılır, provider anahtarları boş/worker kapalıdır; sağlayıcı çağrıları ayrı kullanıcı onayı gerektirir. Yerel tek komut kurulumu ve veri tabanlı workflow/model kabulü değişmez.
 
 ## Resmi kaynaklar
 
