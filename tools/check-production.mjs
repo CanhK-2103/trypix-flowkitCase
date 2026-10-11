@@ -191,10 +191,10 @@ try {
   const capturedLogs = await execute("docker", ["logs", proxy], { cwd: root, env, maxBuffer: 8 * 1024 * 1024 });
   const logs = capturedLogs.stdout + capturedLogs.stderr;
   assert(!logs.includes(password) && !logs.includes(sessionCookie.split("=")[1]));
-  const accessLogs = logs.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line))
-    .filter((entry) => entry.logger?.startsWith("http.log.access"));
+  const proxyLogs = logs.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+  const accessLogs = proxyLogs.filter((entry) => entry.logger?.startsWith("http.log.access"));
   assert(accessLogs.length > 0);
-  for (const entry of accessLogs) {
+  for (const entry of proxyLogs) {
     assert.equal(entry.service, "edge");
     for (const key of ["run_id", "node_id", "attempt"]) assert.equal(entry[key], null);
   }

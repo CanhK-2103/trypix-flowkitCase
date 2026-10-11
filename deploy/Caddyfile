@@ -1,5 +1,10 @@
 {
 	admin off
+	# This deployment publishes TCP only. Do not advertise unreachable HTTP/3,
+	# or start QUIC's separate logger/UDP buffer tuning in the container.
+	servers {
+		protocols h1 h2
+	}
 	log {
 		output stdout
 		format append {

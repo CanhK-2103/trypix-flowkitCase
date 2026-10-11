@@ -1,7 +1,8 @@
 {
-  "checked_at": "2026-10-11T18:58:12.265901+00:00",
+  "checked_at": "2026-10-11T19:26:32.735650+00:00",
   "url": "https://flowkit.canhurkurtoglu.com",
   "origin_ip": "185.237.14.198",
+  "authentication": "password-only-signed-session",
   "tls": {
     "validation": "system-trust-and-hostname",
     "issuer": [
@@ -34,11 +35,10 @@
     ]
   },
   "http_redirect": 308,
+  "unauthenticated_dashboard_redirect": 303,
+  "password_only_form": 200,
+  "username_required": false,
   "unauthenticated_routes": [
-    {
-      "path": "/",
-      "status": 401
-    },
     {
       "path": "/models",
       "status": 401
@@ -61,9 +61,20 @@
     }
   ],
   "unauthenticated_mutation": 401,
-  "wrong_credentials": 401,
+  "wrong_password": 401,
+  "tampered_session": 401,
+  "cross_origin_mutation": 403,
   "unauthenticated_asset": 401,
   "authenticated_dashboard_api_asset": 200,
+  "cookie_flags": [
+    "Secure",
+    "HttpOnly",
+    "SameSite=Strict",
+    "Path=/",
+    "Max-Age=43200"
+  ],
+  "logout": 303,
+  "after_logout": 401,
   "models": [
     "flux-dev",
     "flux-schnell",
