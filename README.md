@@ -2,7 +2,7 @@
 
 JSON olarak tanımlanan doğrusal AI workflow'larını kaydeden, doğrulayan ve arka planda çalıştıran küçük bir backend platformu. Go API + ayrı River worker + PostgreSQL; React dashboard yalnızca HTTP API kullanır.
 
-**Durum:** uygulama ve mock testler mevcut. Gerçek sağlayıcı kabul denemeleri yerel API anahtarları bekliyor; [kanıt ve kalan kontroller](docs/ACCEPTANCE.md). Çıktı kalitesi değerlendirmesine yönelik ek üretim yapılmaz.
+**Durum:** uygulama ve mock testler mevcut; ilk doğrudan OpenRouter → fal denemesi gerçek sağlayıcılarla tamamlandı. Fal billing sorgusu mevcut anahtarın yetkisi nedeniyle 403 döndü. FlowKit üzerinden canlı run'lar ve runtime model/workflow kabulü kullanıcı onaylarıyla sıradaki adımlar; [kanıt ve kalan kontroller](docs/ACCEPTANCE.md). Çıktı kalitesi değerlendirmesine yönelik ek üretim yapılmaz.
 
 Repository: [CanhK-2103/trypix-flowkitCase](https://github.com/CanhK-2103/trypix-flowkitCase). [Dashboard görünümü](docs/dashboard.jpg).
 
@@ -25,6 +25,15 @@ DASHBOARD_PORT=8081 LOAD_EXAMPLES=false docker compose -p flowkit-acceptance up
 ```
 
 Normal kurulumu yeniden başlatmanız veya verilerini silmeniz gerekmez. Bulut deploy bu teslimin parçası değildir; yerel gateway yalnızca 127.0.0.1'e bağlıdır.
+
+Docker Desktop yeniden açıldığında veritabanı, API ve dashboard `unless-stopped` politikasıyla geri gelir; elle durdurulmuş servisler elle açılır. Her sağlayıcı çağrısını ayrıca onaylayacağınız bir oturumda worker'ı kapalı tutarak yalnızca yönetim servislerini açın:
+
+```sh
+docker compose stop worker
+docker compose up -d --wait db init api bootstrap dashboard
+```
+
+Bu durumda workflow düzenleme, listeleme ve maliyet tahmini kullanılabilir; başlatılan run'lar worker açılana kadar kuyrukta bekler. Worker'ı anahtarlarla açmak kuyruktaki run'ları ve bekleyen faturalama sorgularını otomatik yürütebilir; kapsam onaylanmadan `docker compose up` ile worker'ı başlatmayın.
 
 ## Mimari ve çalıştırma
 

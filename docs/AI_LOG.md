@@ -65,3 +65,9 @@
 - Mevcut sağlayıcı billing adaptörü kullanıldı, ancak HTTP transport en fazla bir GET'e ve yalnızca onaylanan request ID/model/source=billed filtresine izin verecek şekilde sınırlandı. Olası ek pagination isteği dahi yerelde engellenir; otomatik retry yok.
 - Tek sorgu 475 ms'de HTTP 403 ve “This API key is not permitted to perform this action.” döndürdü. Kullanılan anahtar bu faturalama okumasına yetkili değil; üretim başarı durumu korunarak gerçek fal ücret ve gerçek toplam null/unavailable bırakıldı.
 - Sonuç ignored checkpoint, anahtarsız kanıt ve kabul kayıtlarına yazıldı. Toplam beş anahtarlı HTTP çağrısı; üretim sayısı bir LLM ve bir görsel olarak kaldı. BILLING veya FULL yetkili ayrı FAL_BILLING_KEY olmadan gerçek fal ücreti doğrulanmış gibi gösterilmedi.
+
+## 2026-10-11 — Docker yeniden açılışında yönetim servislerinin toparlanması
+
+- Kullanıcı bilgisayarı kapatıp Docker Desktop'ı yeniden açtıktan sonra sistemin aktif olmasını istedi. PostgreSQL container'ı exited, API/worker restart döngüsünde ve gateway 502 durumundaydı; veritabanında restart politikası olmadığı görüldü.
+- Gerçek çağrılar için verilen onay sınırı korunarak önce worker açıkça durduruldu. Mevcut volume'lar korunarak yalnızca db/init/api/bootstrap/dashboard servisleri başlatıldı; API ready ve dashboard HTTP 200 doğrulandı. Sağlayıcı isteği veya run başlatılmadı.
+- PostgreSQL'e `restart: unless-stopped` eklendi ve çalışan container'ın restart politikası veriyi/container'ı yeniden oluşturmadan güncellendi. Compose konfigürasyonu doğrulandı; README'de worker kapalı yönetim başlangıcı ve kuyrukta bekleme davranışı belgelendi.
