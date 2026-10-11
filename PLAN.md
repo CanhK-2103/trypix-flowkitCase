@@ -654,13 +654,13 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 - [x] Otomatik testler gerçek provider/pricing/media çağrısı yapmıyor ve hata yolları geçiyor.
 - [x] GitHub linki, kısa README, AGENTS.md ve gerçek AI çalışma notları hazır.
 - [x] Bir hafta daha paragrafı ve bilinen sınırlar açık.
-- Bulut deploy yapılmadı; isteğe bağlı bu teslim kalemi uygulanmıyor. Local gateway yalnızca 127.0.0.1'e bağlı.
+- [x] İsteğe bağlı bulut deploy, public HTTPS ve bütün dashboard/API yollarının parola koruması doğrulandı. Local gateway yalnızca 127.0.0.1'e bağlı.
 
 Uygulama, PostgreSQL/River entegrasyon testleri, Docker kurulumu ve canlı üretim kabulü tamamlandı. Çalıştırılmış kontroller ve billing yetkisi sınırı [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) dosyasında tutulur. Yukarıdaki liste planın kabul ölçütleridir; canlı sağlayıcı kanıtı test kanıtından ayrı değerlendirilir.
 
 ## 21. İsteğe bağlı VPS deployment
 
-Mevcut Compose'un üzerinde Caddy HTTPS/Basic Auth, özel DB parolası, dışarı kapalı DB/API/dashboard portları ve onay kapsamı alınana kadar kapalı worker kullanılır. `compose.production.yaml`, `deploy/README.md` ve anahtarsız `tools/check-production.mjs` hazır ve yerel/CI olarak doğrulandı. Sunucuya SSH erişimi, Docker kurulumu, 8852cd3 kodunun build/startup'ı, API readiness, iki seed workflow ve kapalı backend portları doğrulandı. Cloudflare domain aktivasyonu, public Let’s Encrypt sertifikası, normal DNS üzerinden HTTPS 401 ve yetkili cloud dashboard/API/static 200 doğrulandı; docs/evidence/deployment.json. Cloud yeni DB ile açılır, provider anahtarları boş/worker kapalıdır; sağlayıcı çağrıları ayrı kullanıcı onayı gerektirir. Yerel tek komut kurulumu ve veri tabanlı workflow/model kabulü değişmez.
+Mevcut Compose'un üzerinde Caddy HTTPS, tek şifreli Go gate, özel DB parolası, dışarı kapalı DB/API/dashboard/gate portları ve onay kapsamı alınana kadar kapalı worker kullanılır. Kullanıcı isteğiyle Basic Auth yerine kullanıcı adı gerektirmeyen form seçildi. Site şifresi SSH parolasından ayrıdır; sunucuda yalnız bcrypt hash'i tutulur. Gate imzalı 12 saatlik Secure/HttpOnly/SameSite=Strict cookie, aynı-origin login/logout ve mutation kontrolü, IP başına dakikada beş login denemesi uygular. Kalıcı 32-byte session key + password hash'e bağlı imza restart'ta oturumu korur, şifre/key değişiminde geçersiz kılar. Gate DB/queue/provider kullanmaz; yerel Compose'a eklenmez. `compose.production.yaml`, `deploy/README.md` ve anahtarsız `tools/check-production.mjs` kurulum/koruma kontrollerini içerir. Cloudflare domain aktivasyonu ve public Let’s Encrypt sertifikası doğrulandı; public kontrol sonuçları docs/evidence/deployment.json'dadır. Cloud yeni DB ile açılır, provider anahtarları boş/worker kapalıdır; sağlayıcı çağrıları ayrı kullanıcı onayı gerektirir. Yerel tek komut kurulumu ve veri tabanlı workflow/model kabulü değişmez.
 
 ## Resmi kaynaklar
 

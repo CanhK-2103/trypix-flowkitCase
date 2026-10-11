@@ -26,15 +26,13 @@
 		}
 	}
 
-	# Protect the dashboard, API, health routes and artifacts together.
-	basic_auth {
-		{env.DASHBOARD_USERNAME} {env.DASHBOARD_PASSWORD_HASH}
-	}
-	# The backend has no reason to receive the gateway password.
-	request_header -Authorization
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy no-referrer
 	}
-	reverse_proxy dashboard:80
+	# The private gate requires a signed session on every dashboard/API/asset route.
+	reverse_proxy gate:8080 {
+		# Never trust a client-supplied rate-limit identity.
+		header_up X-FlowKit-Client-IP {http.request.remote.host}
+	}
 }

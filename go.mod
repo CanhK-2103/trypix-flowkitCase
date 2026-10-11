@@ -11,6 +11,7 @@ require (
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.49.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/shopspring/decimal v1.5.0
+	golang.org/x/crypto v0.58.0
 )
 
 require (
@@ -27,6 +28,6 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 )

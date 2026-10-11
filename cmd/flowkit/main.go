@@ -7,12 +7,14 @@ import (
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/artifacts"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/config"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/engine"
+	"github.com/CanhK-2103/trypix-flowkitCase/internal/gate"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/jobs"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/providers"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/storage"
 	"github.com/CanhK-2103/trypix-flowkitCase/internal/telemetry"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -38,6 +40,13 @@ func run() error {
 	log := telemetry.Logger(mode, uuid.NewString())
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	if mode == "gate" {
+		handler, err := gate.New(gate.Config{PasswordHash: os.Getenv("DASHBOARD_PASSWORD_HASH"), SessionKey: os.Getenv("DASHBOARD_SESSION_KEY"), Upstream: config.Env("GATE_UPSTREAM_URL", "http://dashboard:80")}, log)
+		if err != nil {
+			return err
+		}
+		return serveHTTP(ctx, cfg.Address, handler, log, "gate")
+	}
 	pool, e := pgxpool.New(ctx, cfg.DatabaseURL)
 	if e != nil {
 		return e
@@ -76,22 +85,26 @@ func run() error {
 			return e
 		}
 		handler := (&api.Server{Store: store, Queue: queue, Config: cfg, Log: log}).Handler()
-		server := &http.Server{Addr: cfg.Address, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second}
-		done := make(chan error, 1)
-		go func() { done <- server.ListenAndServe() }()
-		log.Info("API started", "event", "api.started", "address", cfg.Address)
-		select {
-		case e := <-done:
-			if e != http.ErrServerClosed {
-				return e
-			}
-		case <-ctx.Done():
-			shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			return server.Shutdown(shutdown)
-		}
-		return nil
+		return serveHTTP(ctx, cfg.Address, handler, log, "api")
 	default:
-		return fmt.Errorf("unknown mode %q; use init, api or worker", mode)
+		return fmt.Errorf("unknown mode %q; use init, api, worker or gate", mode)
 	}
+}
+
+func serveHTTP(ctx context.Context, address string, handler http.Handler, log *slog.Logger, service string) error {
+	server := &http.Server{Addr: address, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, ErrorLog: slog.NewLogLogger(log.Handler(), slog.LevelError)}
+	done := make(chan error, 1)
+	go func() { done <- server.ListenAndServe() }()
+	log.Info("HTTP service started", "event", service+".started", "address", address)
+	select {
+	case err := <-done:
+		if err != http.ErrServerClosed {
+			return err
+		}
+	case <-ctx.Done():
+		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		return server.Shutdown(shutdown)
+	}
+	return nil
 }

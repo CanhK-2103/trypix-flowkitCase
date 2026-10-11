@@ -1,6 +1,8 @@
 # VPS deployment
 
-Mevcut Go API, River worker, PostgreSQL ve React dashboard aynı Compose tanımıyla tek Ubuntu 24.04 VPS üzerinde çalışır. Production override yalnızca giriş noktasını, DB parolasını ve worker'ın varsayılan başlangıcını değiştirir. Caddy 2.11.7 HTTPS sertifikasını otomatik alıp yeniler; dashboard, API, health ve görseller aynı Basic Auth korumasındadır. PostgreSQL, API ve dashboard için host portu yayınlanmaz. Caddy admin API kapalıdır.
+Mevcut Go API, River worker, PostgreSQL ve React dashboard aynı Compose tanımıyla tek Ubuntu 24.04 VPS üzerinde çalışır. Caddy 2.11.7 HTTPS sertifikasını otomatik alıp yeniler. Production'a özel `flowkit gate` süreci kullanıcı adı istemeyen şifre formunu sunar; dashboard, API, health ve görseller aynı oturum korumasındadır. PostgreSQL, API, dashboard ve gate için host portu yayınlanmaz. Caddy admin API kapalıdır. Gate DB veya provider kullanmaz; yerel Compose davranışı değişmez.
+
+Şifre sunucuda bcrypt hash olarak tutulur; SSH parolasıyla aynı olmamalıdır. Oturum 12 saatlik HMAC imzalı `__Host-flowkit_session` cookie'sidir: Secure, HttpOnly, SameSite=Strict, Path=/, Domain yok. Kalıcı session key sayesinde gate restart oturumu bozmaz; şifre hash'ini veya session key'i değiştirmek bütün eski oturumları geçersiz kılar. Çıkış tarayıcı cookie'sini siler; kopyalanmış bir token TTL bitene/secret dönene kadar geçerlidir. Login/logout aynı HTTPS origin'den gelir; tarayıcı mutation'larında Origin/Fetch Metadata kontrol edilir. Login IP başına dakikada en fazla beş denemedir; limiter bounded ve gate restart'ta sıfırlanır. Caddy, client IP header'ını kendisi yazar; gate yalnız private Docker ağındadır. Proxy Nginx/API'ye Authorization veya Cookie aktarmaz; yanıtlar no-store'dur. Hesap/yetki sistemi eklenmez.
 
 ## DNS ve erişim
 
@@ -19,7 +21,7 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-`.env` içine `FLOWKIT_DOMAIN`, `DASHBOARD_USERNAME`, güçlü/random **hex** `POSTGRES_PASSWORD` ve `DASHBOARD_PASSWORD_HASH` yazın. PostgreSQL URL'sine gömüldüğü için DB parolasında yalnız hex karakter kullanın. Örnek üretim: `openssl rand -hex 32`. Gateway parolasını etkileşimli hashleyin:
+`.env` içine `FLOWKIT_DOMAIN`, güçlü/random **hex** `POSTGRES_PASSWORD`, `DASHBOARD_PASSWORD_HASH` ve bağımsız **32-byte hex** `DASHBOARD_SESSION_KEY` yazın. DB parolası URL'ye gömüldüğü için hex olmalıdır; DB parolası ve session key'i ayrı ayrı `openssl rand -hex 32` ile üretin. Site şifresini (en fazla 72 UTF-8 byte) etkileşimli hashleyin:
 
 ```sh
 docker run --rm -it caddy:2.11.7-alpine caddy hash-password
@@ -50,13 +52,25 @@ Bu komutlar .env içine anahtar koymayı tek başına izin saymaz. Uygulamanın 
 ## Kabul ve bakım
 
 ```sh
-# Üretim başlatmaz. İlk istek 401, ikinci istek kullanıcı parolasını sorarak 200 dönmeli.
+# Üretim başlatmaz. API parolasız 401 döner; dashboard kökü login formuna 303 döner.
 curl -s -o /dev/null -w '%{http_code}\n' https://YOUR_SUBDOMAIN/models
-curl -u reviewer https://YOUR_SUBDOMAIN/health/ready
-docker compose -p flowkit -f compose.yaml -f compose.production.yaml logs --tail=50 api proxy
+curl -s -D - -o /dev/null https://YOUR_SUBDOMAIN/
+docker compose -p flowkit -f compose.yaml -f compose.production.yaml logs --tail=50 api gate proxy
 ```
 
-Dashboard ve tüm API yolları parolasız 401 dönmelidir; HTTP HTTPS'e yönlenmelidir. Açık DB/API/dashboard host portu olmamalıdır. Sertifika tarayıcı tarafından güvenilir olmalıdır. Uygulama/provider anahtarları frontend veya loglarda görünmemelidir. Yerel production smoke kontrolü gerçek sağlayıcı çağırmaz:
+Tarayıcı `/auth/login` formunda yalnız şifre ister; başarılı giriş `/` adresine döner. `/auth/session` yalnız korumanın aktif/oturumun geçerli olup olmadığını söyler. `POST /auth/logout` cookie'yi siler; dashboard'da Çıkış butonu vardır. API curl erişimi de aynı oturum cookie'sini kullanır:
+
+```sh
+umask 077
+read -r -s -p 'FlowKit password: ' FLOWKIT_PASSWORD; echo
+printf '%s' "$FLOWKIT_PASSWORD" | curl -s -c .env.cookies \
+  -H 'Origin: https://YOUR_SUBDOMAIN' \
+  --data-urlencode 'password@-' https://YOUR_SUBDOMAIN/auth/login -o /dev/null
+unset FLOWKIT_PASSWORD
+curl -b .env.cookies https://YOUR_SUBDOMAIN/health/ready
+```
+
+Şifre stdin üzerinden gider, argv'de bulunmaz; `.env.cookies` ignored bir dosyadır. API/asset yolları oturumsuz 401, dashboard kökü GET ile login formuna 303 döner; HTTP HTTPS'e yönlenir. DB/API/dashboard/gate host portu olmamalıdır. Sertifika tarayıcı tarafından güvenilir olmalıdır. Uygulama/provider anahtarları frontend veya loglarda görünmemelidir. Yerel production smoke kontrolü gerçek sağlayıcı çağırmaz:
 
 ```sh
 node tools/check-production.mjs
@@ -68,7 +82,7 @@ DB yedeğini `umask 077` ile `docker compose ... exec -T db pg_dump -U flowkit -
 
 ## Durum
 
-Production override yerelde ayrı, anahtarsız Compose ortamında test edildi: tüm yolların parola koruması, normal sertifika doğrulamasıyla yerel HTTPS, yönlendirme, kapalı backend portları, varsayılan kapalı worker, açıkça başlatılan sağlayıcısız worker run'ı ve idempotency, proxy restart ve 26 JSON access log satırında null bağlam. Test kendi geçici container/volume'larını kaldırdı. Go/PostgreSQL/vet/sqlc/frontend kontrolleri de başarılı.
+Production override yerelde ayrı, anahtarsız Compose ortamında test edildi: tek şifreli login, API/asset koruması, normal CA doğrulamasıyla HTTPS, Origin/CSRF reddi, logout, kapalı backend portları, varsayılan kapalı worker, açıkça başlatılan sağlayıcısız worker run'ı/idempotency, gate/proxy restart sonrası aynı oturum ve JSON logların null bağlamı. Test kendi geçici container/volume'larını kaldırdı. Go/PostgreSQL/vet/sqlc/frontend kontrolleri de başarılı.
 
 Sunucu SSH ön kontrolü Ubuntu 24.04/x86_64, 1 CPU, yaklaşık 4 GB RAM ve 50 GB disk gösterdi; Docker Engine 29.9.0 ve Compose 5.6.0 resmî apt deposundan kuruldu. Cloud kontrolü sağlayıcısız yapıldı; yeni fal/OpenRouter run'ları için ayrı kullanıcı onayı gerekir.
 
@@ -76,4 +90,4 @@ Sunucu SSH ön kontrolü Ubuntu 24.04/x86_64, 1 CPU, yaklaşık 4 GB RAM ve 50 G
 
 **Public yönetim paneli:** https://flowkit.canhurkurtoglu.com. Cloudflare journey/wesley nameserver'ları aktif; A kaydı verilen VPS adresine yönlenir, DNS only. DNS hazır olmadan başlayan ACME denemeleri NXDOMAIN/backoff aldı; DNS'in iki public resolver ve VPS üzerinde doğru olduğu doğrulanınca yalnız proxy bir kez yeniden başlatıldı. Ardından Let's Encrypt YE2 issuer'lı public sertifika sistem trust store + hostname/SAN ile doğrulandı; sertifika validasyonunu kapatma veya uyarı bypass yapılmadı. Normal DNS üzerinden HTTPS sorgusu da 401 döndü.
 
-Public kontrol: HTTP 308; dashboard/models/workflows/runs/health/artifacts ve static asset parolasız 401; yanlış parola ve yetkisiz workflow POST 401; doğru parola ile readiness/dashboard/API/JS asset 200. Üç model ve iki workflow hazır. [Anahtarsız deployment kanıtı](../docs/evidence/deployment.json) sertifika ve HTTP sonuçlarını içerir; kullanıcı parolası veya auth header içermez. Gerçek sağlayıcı çağrısı 0. Worker kapalı/provider anahtarları boş olduğu için cloud üretim aktif değildir; yerel gerçek run/medya cloud'a taşınmamıştır. Değerlendiriciye URL ile gateway erişim bilgisi ayrıca verilir; giriş bilgileri README/Git'e konmaz.
+İlk public kontrol Basic Auth ile HTTP 308, yetkisiz 401/yetkili 200 ve güvenilir TLS'i doğruladı. Kullanıcının sonraki isteğiyle tek şifreli giriş ve ayrı site şifresi eklendi; güncel [anahtarsız deployment kanıtı](../docs/evidence/deployment.json) etkin auth yöntemini ve HTTP sonuçlarını gösterir. Üç model ve iki workflow hazır. Kanıt parola/hash/session cookie içermez. Worker kapalı/provider anahtarları boş olduğu için cloud üretim aktif değildir; yerel gerçek run/medya cloud'a taşınmamıştır. Değerlendiriciye URL ile yalnız site şifresi ayrıca verilir; SSH erişim bilgisi verilmez.

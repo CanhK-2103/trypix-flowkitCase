@@ -30,6 +30,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (response.status === 204) return undefined as T;
   const body = await response.json();
+  if (response.status === 401 && body.error?.code === "AUTH_REQUIRED" && typeof window !== "undefined")
+    window.location.assign("/auth/login");
   if (!response.ok)
     throw new ApiError(
       response.status,

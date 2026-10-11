@@ -15,11 +15,11 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const project = `flowkit-production-check-${randomBytes(5).toString("hex")}`;
 const caddy = "caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f";
 const password = randomBytes(24).toString("hex");
-const authorization = `Basic ${Buffer.from(`reviewer:${password}`).toString("base64")}`;
+let sessionCookie = "";
 const temporary = await mkdtemp(path.join(os.tmpdir(), `${project}-`));
 const env = { ...process.env, OPENROUTER_API_KEY: "", FAL_KEY: "", FAL_BILLING_KEY: "",
   POSTGRES_PASSWORD: randomBytes(32).toString("hex"), FLOWKIT_DOMAIN: "flowkit.localhost",
-  DASHBOARD_USERNAME: "reviewer", EDGE_BIND_ADDRESS: "127.0.0.1", LOAD_EXAMPLES: "true",
+  DASHBOARD_SESSION_KEY: randomBytes(32).toString("hex"), EDGE_BIND_ADDRESS: "127.0.0.1", LOAD_EXAMPLES: "true",
   WORKER_CONCURRENCY: "1", LOG_LEVEL: "info", COMPOSE_PROFILES: "" };
 const argumentsBase = ["compose", "-p", project, "-f", "compose.yaml", "-f", "compose.production.yaml"];
 let ca;
@@ -43,13 +43,13 @@ async function freePort() {
   return String(port);
 }
 async function request(route, { authenticated = true, method = "GET", body, headers = {}, plaintext = false } = {}) {
-  const data = body === undefined ? undefined : JSON.stringify(body);
+  const data = body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body);
   return new Promise((resolve, reject) => {
     const transport = plaintext ? http : https;
     const req = transport.request({ hostname: "flowkit.localhost", servername: "flowkit.localhost",
       port: Number(plaintext ? env.EDGE_HTTP_PORT : env.EDGE_HTTPS_PORT), path: route, method,
       ca, autoSelectFamily: false, lookup: (_name, _options, callback) => callback(null, "127.0.0.1", 4),
-      headers: { Host: "flowkit.localhost", ...(authenticated ? { Authorization: authorization } : {}),
+      headers: { Host: `flowkit.localhost:${plaintext ? env.EDGE_HTTP_PORT : env.EDGE_HTTPS_PORT}`, ...(authenticated && sessionCookie ? { Cookie: sessionCookie } : {}),
         ...(data ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) } : {}), ...headers },
     }, (response) => {
       const chunks = [];
@@ -74,7 +74,9 @@ try {
   // This disposable password is not a real credential. No local .env provider key is inherited.
   env.DASHBOARD_PASSWORD_HASH = await docker(["run", "--rm", caddy, "caddy", "hash-password", "--plaintext", password]);
   const config = JSON.parse(await compose("--profile", "*", "config", "--format", "json"));
-  for (const service of ["db", "api", "dashboard"]) assert.equal(config.services[service].ports?.length ?? 0, 0);
+  for (const service of ["db", "api", "dashboard", "gate"]) assert.equal(config.services[service].ports?.length ?? 0, 0);
+  assert(!("OPENROUTER_API_KEY" in config.services.gate.environment));
+  assert(!("FAL_KEY" in config.services.gate.environment));
   assert.deepEqual(config.services.worker.profiles, ["generation"]);
   assert.equal(config.services.proxy.ports.length, 2);
   assert(config.services.proxy.ports.every((port) => port.host_ip === "127.0.0.1"));
@@ -98,11 +100,41 @@ try {
   const redirect = await request("/", { plaintext: true, authenticated: false });
   assert.equal(redirect.status, 308);
   assert.match(redirect.headers.location, /^https:\/\/flowkit\.localhost/);
-  for (const route of ["/", "/models", "/workflows", "/runs", "/health/ready", "/artifacts/test"]) {
+  const rootRedirect = await request("/", { authenticated: false });
+  assert.equal(rootRedirect.status, 303);
+  assert.equal(rootRedirect.headers.location, "/auth/login");
+  const loginPage = await request("/auth/login", { authenticated: false });
+  assert.equal(loginPage.status, 200);
+  assert.equal((loginPage.data.match(/<input/g) ?? []).length, 1);
+  assert(!loginPage.data.includes("username"));
+  for (const route of ["/models", "/workflows", "/runs", "/health/ready", "/artifacts/test"]) {
     assert.equal((await request(route, { authenticated: false })).status, 401, route);
   }
   assert.equal((await request("/workflows", { authenticated: false, method: "POST", body: {} })).status, 401);
-  assert.equal((await request("/models", { headers: { Authorization: "Basic invalid" } })).status, 401);
+  assert.equal((await request("/models", { authenticated: false, headers: { Authorization: "Basic invalid" } })).status, 401);
+  const origin = `https://flowkit.localhost:${env.EDGE_HTTPS_PORT}`;
+  const loginOptions = (value, requestOrigin = origin) => ({ authenticated: false, method: "POST",
+    body: new URLSearchParams({ password: value }).toString(),
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: requestOrigin } });
+  const wrongPassword = await request("/auth/login", loginOptions("wrong-password"));
+  assert.equal(wrongPassword.status, 401);
+  assert.equal(wrongPassword.headers["www-authenticate"], undefined);
+  assert.equal(wrongPassword.headers["set-cookie"], undefined);
+  assert.equal((await request("/auth/login", loginOptions(password, "https://attacker.test"))).status, 403);
+  async function login() {
+    const response = await request("/auth/login", loginOptions(password));
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.location, "/");
+    const cookie = response.headers["set-cookie"]?.[0];
+    assert(cookie);
+    for (const flag of ["Secure", "HttpOnly", "SameSite=Strict", "Path=/", "Max-Age=43200"]) assert(cookie.includes(flag));
+    assert(!cookie.includes("Domain="));
+    sessionCookie = cookie.split(";")[0];
+  }
+  await login();
+  assert.equal((await request("/auth/session")).data.authenticated, true);
+  assert.equal((await request("/workflows", { method: "POST", body: {}, headers: { Origin: "https://attacker.test" } })).status, 403);
+  assert.equal((await request("/models", { headers: { Cookie: `${sessionCookie}tampered` } })).status, 401);
   assert.equal((await request("/health/ready")).status, 200);
   const page = await request("/");
   assert.equal(page.status, 200);
@@ -143,15 +175,22 @@ try {
   assert.equal(replay.status, 200);
   assert.equal(replay.data.run_id, runID);
   assert.equal((await request(`/workflows/${created.data.id}`, { method: "DELETE" })).status, 204);
-  await compose("restart", "proxy");
+  await compose("restart", "gate", "proxy");
   for (let attempt = 0; ; attempt++) {
     try { assert.equal((await request("/health/ready")).status, 200); break; }
     catch (error) { if (attempt >= 20) throw error; await pause(500); }
   }
   assert.equal((await request("/models", { authenticated: false })).status, 401);
+  assert.equal((await request("/auth/logout", { method: "POST", headers: { Origin: "https://attacker.test" } })).status, 403);
+  const logout = await request("/auth/logout", { method: "POST", headers: { Origin: origin } });
+  assert.equal(logout.status, 303);
+  assert(logout.headers["set-cookie"][0].includes("Max-Age=0"));
+  sessionCookie = "";
+  assert.equal((await request("/models")).status, 401);
+  await login();
   const capturedLogs = await execute("docker", ["logs", proxy], { cwd: root, env, maxBuffer: 8 * 1024 * 1024 });
   const logs = capturedLogs.stdout + capturedLogs.stderr;
-  assert(!logs.includes(password) && !logs.includes(authorization));
+  assert(!logs.includes(password) && !logs.includes(sessionCookie.split("=")[1]));
   const accessLogs = logs.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line))
     .filter((entry) => entry.logger?.startsWith("http.log.access"));
   assert(accessLogs.length > 0);
@@ -159,15 +198,22 @@ try {
     assert.equal(entry.service, "edge");
     for (const key of ["run_id", "node_id", "attempt"]) assert.equal(entry[key], null);
   }
-  log("INFO", "production.checked", { tls: "verified-local-ca", authentication: "all-routes",
+  const gateLogs = await compose("logs", "--no-color", "--no-log-prefix", "gate");
+  assert(!gateLogs.includes(password) && !gateLogs.includes(sessionCookie.split("=")[1]) && !gateLogs.includes(env.DASHBOARD_SESSION_KEY));
+  for (const line of gateLogs.split(/\r?\n/).filter(Boolean)) {
+    const entry = JSON.parse(line);
+    for (const key of ["run_id", "node_id", "attempt"]) assert.equal(entry[key], null);
+  }
+  log("INFO", "production.checked", { tls: "verified-local-ca", authentication: "password-only-signed-session-all-routes",
     worker: "opt-in", restart: "passed", provider_calls: 0, access_log_lines: accessLogs.length });
 } catch (error) {
   // Child-process errors can include arguments/environment; only expose a sanitized message.
-  const message = error.message.replaceAll(password, "[redacted]").replaceAll(authorization, "[redacted]");
+  const sanitize = (text) => text.replaceAll(password, "[redacted]").replaceAll(sessionCookie || "unused-placeholder", "[redacted]").replaceAll(env.DASHBOARD_SESSION_KEY, "[redacted]").replaceAll(env.DASHBOARD_PASSWORD_HASH || "unused-hash", "[redacted]");
+  const message = sanitize(error.message);
   log("ERROR", "production.check_failed", { error: message.slice(-2200) });
   if (stackCreated) {
     const logs = await compose("logs", "--no-color", "--tail=15").catch(() => "");
-    log("ERROR", "production.failure_logs", { logs: logs.replaceAll(password, "[redacted]").replaceAll(authorization, "[redacted]").slice(-4500) });
+    log("ERROR", "production.failure_logs", { logs: sanitize(logs).slice(-4500) });
   }
   process.exitCode = 1;
 } finally {

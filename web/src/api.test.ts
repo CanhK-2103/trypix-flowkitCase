@@ -69,4 +69,19 @@ describe("dashboard requests", () => {
       "stable-key",
     );
   });
+  it("returns to login on session expiry without replaying a mutation", async () => {
+    const assign = vi.fn();
+    const fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: { code: "AUTH_REQUIRED", message: "Sign in" } }),
+    });
+    vi.stubGlobal("window", { location: { assign } });
+    vi.stubGlobal("fetch", fetch);
+    await expect(api("/workflows/id/runs", { method: "POST", body: "{}" }))
+      .rejects.toMatchObject({ status: 401, code: "AUTH_REQUIRED" });
+    expect(assign).toHaveBeenCalledWith("/auth/login");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(retryGet(0, new ApiError(401, "AUTH_REQUIRED", "Sign in"))).toBe(false);
+  });
 });

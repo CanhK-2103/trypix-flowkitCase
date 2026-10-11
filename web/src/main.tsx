@@ -85,6 +85,18 @@ function ErrorBox({ error }: { error: Error | null | undefined }) {
 }
 function App() {
   const qc = useQueryClient();
+  const session = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/auth/session");
+        const value = await response.json() as { authenticated?: boolean };
+        return response.ok && value.authenticated === true;
+      } catch { return false; } // Local Compose has no production gate.
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
   const workflows = useQuery({
     queryKey: ["workflows"],
     queryFn: () => allPages<Workflow>("/workflows"),
@@ -286,7 +298,11 @@ function App() {
           <div className="breadcrumb">
             Çalışma alanı <span>/</span> Workflow’lar
           </div>
-          <span className="local-label">LOCAL WORKSPACE</span>
+          {session.data ? (
+            <form method="post" action="/auth/logout">
+              <button className="button ghost" type="submit">Çıkış</button>
+            </form>
+          ) : <span className="local-label">LOCAL WORKSPACE</span>}
         </header>
         <section className="content">
           <div className="page-heading">
