@@ -664,6 +664,8 @@ Mevcut Compose'un üzerinde Caddy HTTPS, tek şifreli Go gate, özel DB parolas�
 
 ## Resmi kaynaklar
 
+VPS edge'in native Caddy lifecycle logları küçük Go `cmd/proxy` süreciyle JSON/service=edge/null execution bağlamına tamamlanır. TLS proxy yalnız yayınlanan TCP için h1/h2 kullanır. 3bf8667 kod CI/production smoke ve cloud log/auth kontrolünden geçti; deployment kanıtı günceldir. Kullanıcının talebiyle site şifresi SSH parolasından ayrıdır; local ignored `.env` içindeki VPS_DASHBOARD_PASSWORD geri okunabilir, sunucuda bcrypt hash tutulur.
+
 - [OpenRouter chat completion](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request), [usage accounting](https://openrouter.ai/docs/cookbook/administration/usage-accounting), [seçilen LLM](https://openrouter.ai/openai/gpt-6-luna), [public Models API](https://openrouter.ai/api/v1/models).
 - [OpenRouter batch quickstart](https://openrouter.ai/docs/batch-quickstart), [batch fiyat/bekleme açıklaması](https://openrouter.ai/blog/announcements/batch-api/), [Luna Pro batch açıklaması](https://openrouter.ai/openai/gpt-6-luna-pro:batch), [official OpenAI GPT-6 Luna documentation](https://developers.openai.com/api/docs/models/gpt-6-luna).
 - [fal Schnell API](https://fal.ai/models/fal-ai/flux/schnell/api), [fal Dev API](https://fal.ai/models/fal-ai/flux/dev/api), [queue](https://fal.ai/docs/documentation/model-apis/inference/queue), [retry/fallback ve common parameters](https://fal.ai/docs/documentation/model-apis/common-parameters).
