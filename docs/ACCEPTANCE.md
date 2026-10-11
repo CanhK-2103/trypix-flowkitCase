@@ -68,6 +68,8 @@ Bu dosya gerçek kanıtı planlanan kontrollerden ayırır. Testler ücretli sa�
 
 ## Henüz doğrulanmamış canlı kabul
 
+Çağrı başına onaylı kabul hazırlığı tamam: ayrı boş `flowkit-acceptance` ortamında API ve kontrollü River worker çalışıyor (dashboard 8081, yerel kontrol 8082). Yalnızca ilk iki model ve ürün workflow'u API'den eklendi. Run `a733fb1e-686e-4d78-8386-09ce5953a36a` DB'ye kaydedildi; input tamam, LLM henüz pending/0 attempt, provider request ve onaylı sağlayıcı çağrısı sayısı 0. Başlangıç tahmini 0.003157700000 USD; canlı ilk completion ayrıca kullanıcı onayı bekliyor. Bu hazırlık başarılı üretim kanıtı değildir. `d597ac0` commit'inin backend/dashboard/compose CI kontrolleri başarılı.
+
 - Aynı modeller/prompt/parametrelerle FlowKit run'ı.
 - Schnell → API ile Dev kaydı → modelRef güncelleme → gerçek Dev run'ı; servis restart olmadan.
 - İkinci workflow'un gerçek Dev run'ı.
