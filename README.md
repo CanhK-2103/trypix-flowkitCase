@@ -24,7 +24,7 @@ Init uygulama/River migration'larını uygular. Bootstrap örnek JSON'ları **AP
 DASHBOARD_PORT=8081 LOAD_EXAMPLES=false docker compose -p flowkit-acceptance up
 ```
 
-Normal kurulumu yeniden başlatmanız veya verilerini silmeniz gerekmez. Bulut deploy bu teslimin parçası değildir; yerel gateway yalnızca 127.0.0.1'e bağlıdır.
+Normal kurulumu yeniden başlatmanız veya verilerini silmeniz gerekmez. Yerel gateway yalnızca 127.0.0.1'e bağlıdır. İsteğe bağlı VPS kurulumu için [deployment yönergesi](deploy/README.md) ve `compose.production.yaml` bulunur: Caddy HTTPS + bütün yollar için Basic Auth, özel DB parolası ve açıkça başlatılan worker. Production ayarları ayrı, anahtarsız yerel Compose testinde doğrulandı; domain aktivasyonu ve canlı TLS kontrolü tamamlanmadan cloud deployment doğrulanmış sayılmaz.
 
 Docker Desktop yeniden açıldığında veritabanı, API ve dashboard `unless-stopped` politikasıyla geri gelir; elle durdurulmuş servisler elle açılır. Her sağlayıcı çağrısını ayrıca onaylayacağınız bir oturumda worker'ı kapalı tutarak yalnızca yönetim servislerini açın:
 
@@ -184,6 +184,8 @@ cd web && npm ci && npm test && npm run build
 PowerShell: `$env:TEST_DATABASE_URL='postgres://flowkit:flowkit@localhost:55432/flowkit_test?sslmode=disable'`. Integration test DB adı `_test` ile bitmelidir; testler bu ayrı DB'yi temizler. Ortam değişkeni yoksa integration testler açıkça skip edilir. CI gerçek provider anahtarı içermez. sqlc 1.31.1 ile `sqlc generate`; generated kod repodadır ve CI fark kontrolü yapar.
 
 CI ayrıca temiz Docker Compose kurulumu, örnek yükleme, gateway statik dosyası ve gerçek worker üzerinde sağlayıcısız `input → output` run'ını kontrol eder. Bu kontrol ücretli istek göndermez; kendi oluşturduğu test workflow'unu sonunda soft-delete eder. Yerelde çalışan temiz örnek ortam için `node tools/check-compose.mjs http://localhost:8080`. OpenAPI yeniden üretimi de CI'da fark kontrolüne dahildir.
+
+`node tools/check-production.mjs` ayrı ve geçici bir Compose projesinde production override'ını kontrol eder: DB/API/dashboard için kapalı host portları, varsayılan kapalı worker, HTTP → HTTPS yönlendirmesi, doğrulanan yerel CA, parolasız/yanlış parolayla 401, yetkili dashboard/API erişimi, sağlayıcısız asenkron run/idempotency, proxy restart ve JSON log bağlamı. Sağlayıcı anahtarlarını boşaltır; yalnız kendi test volume'larını temizler. Bu kontrol canlı domain sertifikasının doğrulanmasının yerine geçmez.
 
 API/worker/init/bootstrap/River uygulama logları JSONL: run_id, node_id, attempt (bağlam yoksa null), event, request/model/provider kimlikleri, süre, retry ve hata. DEBUG demo varsayılanıdır; `LOG_LEVEL` ile değişir. Provider hataları ERROR. Tam input/prompt/output DB izinde; credential/header/base64 loglanmaz. Nginx access log JSON; PostgreSQL motor ve Nginx native error logları altyapı loglarıdır. Docker log rotation 10 MB × 3.
 

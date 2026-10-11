@@ -46,6 +46,7 @@ jobs:
     env:
       OPENROUTER_API_KEY: ""
       FAL_KEY: ""
+      FAL_BILLING_KEY: ""
       LOAD_EXAMPLES: "true"
       LOG_LEVEL: info
     steps:
@@ -56,6 +57,8 @@ jobs:
         run: docker compose -p flowkit-ci up --build --detach --wait --wait-timeout 180
       - name: Verify gateway, bootstrap and asynchronous worker
         run: node tools/check-compose.mjs http://localhost:8080
+      - name: Verify production TLS, authentication and opt-in worker
+        run: node tools/check-production.mjs
       - name: Show service logs on failure
         if: failure()
         run: docker compose -p flowkit-ci logs --no-color --tail=100

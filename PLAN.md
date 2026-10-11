@@ -660,6 +660,8 @@ Uygulama, PostgreSQL/River entegrasyon testleri, Docker kurulumu ve canlı üret
 
 ## Resmi kaynaklar
 
+İsteğe bağlı VPS deployment uygulaması: mevcut Compose'un üzerinde Caddy HTTPS/Basic Auth, özel DB parolası, dışarı kapalı DB/API/dashboard portları ve onay kapsamı alınana kadar kapalı worker kullanılır. `compose.production.yaml`, `deploy/README.md` ve anahtarsız `tools/check-production.mjs` hazır ve yerel olarak doğrulandı. Sunucuya SSH erişimi ve Docker kurulumu doğrulandı. Cloudflare domain aktivasyonu, public sertifika ve cloud smoke henüz bekliyor; sağlayıcı çağrıları ayrı kullanıcı onayı gerektirir. Yerel tek komut kurulumu ve veri tabanlı workflow/model kabulü değişmez.
+
 - [OpenRouter chat completion](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request), [usage accounting](https://openrouter.ai/docs/cookbook/administration/usage-accounting), [seçilen LLM](https://openrouter.ai/openai/gpt-6-luna), [public Models API](https://openrouter.ai/api/v1/models).
 - [OpenRouter batch quickstart](https://openrouter.ai/docs/batch-quickstart), [batch fiyat/bekleme açıklaması](https://openrouter.ai/blog/announcements/batch-api/), [Luna Pro batch açıklaması](https://openrouter.ai/openai/gpt-6-luna-pro:batch), [official OpenAI GPT-6 Luna documentation](https://developers.openai.com/api/docs/models/gpt-6-luna).
 - [fal Schnell API](https://fal.ai/models/fal-ai/flux/schnell/api), [fal Dev API](https://fal.ai/models/fal-ai/flux/dev/api), [queue](https://fal.ai/docs/documentation/model-apis/inference/queue), [retry/fallback ve common parameters](https://fal.ai/docs/documentation/model-apis/common-parameters).

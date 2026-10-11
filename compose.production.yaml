@@ -1,0 +1,47 @@
+# VPS deployment: docker compose -f compose.yaml -f compose.production.yaml up -d --build
+# The worker is opt-in. Starting this stack never authorizes provider calls.
+x-production-runtime: &production-runtime
+  DATABASE_URL: postgres://flowkit:${POSTGRES_PASSWORD:?Set a random hex POSTGRES_PASSWORD in .env}@db:5432/flowkit?sslmode=disable
+
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random hex POSTGRES_PASSWORD in .env}
+  init:
+    environment: *production-runtime
+  api:
+    environment: *production-runtime
+  worker:
+    profiles: [generation]
+    environment:
+      <<: *production-runtime
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+  bootstrap:
+    environment: *production-runtime
+  dashboard:
+    # All external requests must pass through the authenticated TLS proxy.
+    ports: !reset []
+  proxy:
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    restart: unless-stopped
+    environment:
+      FLOWKIT_DOMAIN: ${FLOWKIT_DOMAIN:?Set the FlowKit subdomain in .env}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:?Set DASHBOARD_USERNAME in .env}
+      DASHBOARD_PASSWORD_HASH: ${DASHBOARD_PASSWORD_HASH:?Set a bcrypt DASHBOARD_PASSWORD_HASH in .env}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    ports:
+      - "${EDGE_BIND_ADDRESS:-0.0.0.0}:${EDGE_HTTP_PORT:-80}:80"
+      - "${EDGE_BIND_ADDRESS:-0.0.0.0}:${EDGE_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      dashboard: {condition: service_started}
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+volumes:
+  caddy_data:
+  caddy_config:

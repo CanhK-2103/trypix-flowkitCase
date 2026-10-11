@@ -1,0 +1,40 @@
+{
+	admin off
+	log {
+		output stdout
+		format append {
+			service edge
+			# Caddyfile treats literal null as a string. An unset global placeholder
+			# becomes JSON null; the encoder has no run execution context.
+			run_id {flowkit.null_context}
+			node_id {flowkit.null_context}
+			attempt {flowkit.null_context}
+			wrap json
+		}
+	}
+}
+
+{$FLOWKIT_DOMAIN} {
+	log {
+		output stdout
+		format append {
+			service edge
+			run_id {flowkit.null_context}
+			node_id {flowkit.null_context}
+			attempt {flowkit.null_context}
+			wrap json
+		}
+	}
+
+	# Protect the dashboard, API, health routes and artifacts together.
+	basic_auth {
+		{env.DASHBOARD_USERNAME} {env.DASHBOARD_PASSWORD_HASH}
+	}
+	# The backend has no reason to receive the gateway password.
+	request_header -Authorization
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+	reverse_proxy dashboard:80
+}
