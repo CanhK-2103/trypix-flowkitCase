@@ -626,7 +626,7 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 
 ## 20. Teslim kabul kontrol listesi
 
-İşaretli maddeler uygulama ve ücretsiz test kanıtıdır. Gerçek sağlayıcı doğrulaması ayrı, açık kalan maddelerde tutulur; ayrıntılı kanıtlar docs/ACCEPTANCE.md'dedir.
+İşaretli maddeler uygulama, test veya açıkça belirtilen canlı kabul kanıtıdır. Gerçek sağlayıcı doğrulaması mock kanıtından ayrı tutulur; ayrıntılar docs/ACCEPTANCE.md'dedir. Canlı üretim kabulü tamamlandı; gerçek fal ücretini doğrulama mevcut anahtarın billing yetkisiyle sınırlı.
 
 - [x] .env.example ve docker compose up ile temiz ortamda bütün servisler/dashboard çalışıyor.
 - [x] Normal kurulum iki workflow/farklı görsel modeli hazırlıyor; API örnek yükleyici üretim çağırmıyor ve mevcut düzenlemeleri/silme işlemlerini koruyor.
@@ -640,21 +640,23 @@ Bonuslar son dakika ekleri olarak tasarlanmaz: worker checkpoint, idempotency ve
 - [x] Idempotency eşzamanlı tekrarda tek run/job; payload conflict açık.
 - [x] Başlangıç tahmini formda ve run snapshot'ında; request/node tahmini ve gerçek maliyet ayrı; gerçek toplam yalnızca bütün ücretler doğrulanınca gösteriliyor. Geciken billing, yetki hatası, yenileme ve duplicate maliyet korunması mock testli.
 - [x] Uygulama logları JSON ve run_id/node_id/attempt içeriyor; provider hataları error seviyesinde; DEBUG ayrıntıları, retry/recovery korelasyonu ve secret temizliği doğrulanmış.
-- [x] Dashboard üretici model kimliğini ve adım/deneme/süre/hata bilgilerini run izinden gösteriyor; gerçek üretim görüntüsü canlı kabulde ayrıca kontrol edilecek.
+- [x] Dashboard üretici model kimliğini ve adım/deneme/süre/hata bilgilerini run izinden gösteriyor; gerçek Schnell/Dev çıktıları, başlangıç tahmini ve ayrı maliyet sütunları tarayıcıda kontrol edildi. docs/dashboard-schnell-live.jpg ve docs/dashboard-event-live.jpg.
 - [x] TanStack Query aktif run'ı 2 sn, terminal fakat billing bekleyen run'ı 15 sn poll ediyor; maliyet tamamlanınca/erişilemeyince duruyor. Ağ hatası otomatik yeni run oluşturmuyor, aynı istekte Idempotency-Key korunuyor.
 - [x] CodeMirror JSON sözdizimi hatalarını ve API bulgularını gösteriyor; backend kaydetme doğrulaması zorunlu, kaydedilmemiş metin query yenilemesinde korunuyor.
-- [x] İlk doğrudan OpenRouter → fal akışı tamamlandı; model/prompt/parametre eşleştirmesi README ve docs/evidence/direct.json ile gerçek kayıtlı. Fal gerçek billing tutarı ayrı canlı kabul bekliyor.
-- [x] Aynı tanımın FlowKit üzerinden gerçek DB run'ı ve eşleştirmesinin yürütme kanıtı tamamlandı: a733fb1e-686e-4d78-8386-09ce5953a36a succeeded, birer LLM/image attempt; docs/evidence/flowkit-approved.json. Onay bekleme saati düzeltmesi ayrıca kayıtlı; yeni model kabulü henüz bekliyor.
-- [ ] İki farklı workflow iki farklı kayıtlı görsel modelle gerçekten çalışıyor.
-- [ ] Yeni model ve ikinci workflow yalnızca API verisiyle, restart/deploy/kod değişmeden gerçek sağlayıcıyla çalıştırılmış. Mock HTTP kabulü geçti.
-- [ ] Doğrudan deneme dahil gerçek harcamalar sağlayıcı bazında kayıtlı; fal 5 USD ve OpenRouter 2 USD anahtar sınırları korunmuş.
+- [x] İlk doğrudan OpenRouter → fal akışı tamamlandı; model/prompt/parametre eşleştirmesi README ve docs/evidence/direct.json ile gerçek kayıtlı. Fal billing sorgusu 403 döndü; gerçek fal tutarı bilinmiyor.
+- [x] Aynı tanımın FlowKit üzerinden gerçek DB run'ı ve eşleştirmesinin yürütme kanıtı tamamlandı: a733fb1e-686e-4d78-8386-09ce5953a36a succeeded, birer LLM/image attempt; docs/evidence/flowkit-approved.json. Onay bekleme saati düzeltmesi ayrıca kayıtlı.
+- [x] Schnell sonrası flux-dev yalnızca API ile kaydedildi, modelRef güncellendi, gerçek Dev run 217fb931-3af8-4313-89b2-436985798449 succeeded. Git/container ID/StartedAt/image kimlikleri baseline ile aynı; restart/deploy/kod değişmedi. İlk run snapshot'ı korundu.
+- [x] İki farklı workflow iki farklı kayıtlı görsel modelle gerçekten çalışıyor: ürün Schnell, etkinlik Dev; üç FlowKit run succeeded ve kalıcı çıktılar API'den okunuyor.
+- [x] Yeni model ve ikinci workflow yalnızca API verisiyle, restart/deploy/kod değişmeden gerçek sağlayıcıyla çalıştırıldı. Dev run 217fb931-3af8-4313-89b2-436985798449 ve ikinci workflow run 614b472e-e6c8-4e17-b07d-995f4307b321 succeeded. Git/dört container baseline aynı; runtime_after_all kanıtı var.
+- [x] Bütçe/çağrı izi tutuldu: dört üretim zinciri, toplam 20 onaylı anahtarlı HTTP çağrısı; OpenRouter gerçek toplam 0.000196200000 USD, fal tahmin toplamı 0.106000000000 USD. Planlanan kontrol tutarları inceleme eşiklerinin altında.
+- [ ] Fal exact-request gerçek ücretleri ve sağlayıcı kalan bakiyesi/anahtar limit tüketimi doğrulandı. Mevcut billing okuması 403; uygun yetki ve ayrıca açık kullanıcı onayı olmadan sorgulanmaz. Fal actual ve birleşik gerçek toplam null kalır; bu sınır zorunlu üretim kabulünün tamamlanmasını değiştirmez.
 - [x] Demo tanımları küçük çözünürlük, tek görsel ve kısa LLM çıktısı kullanıyor; fiyat/faturalama birimi ve model seçimi gerekçeleri belgeli.
 - [x] Otomatik testler gerçek provider/pricing/media çağrısı yapmıyor ve hata yolları geçiyor.
 - [x] GitHub linki, kısa README, AGENTS.md ve gerçek AI çalışma notları hazır.
 - [x] Bir hafta daha paragrafı ve bilinen sınırlar açık.
 - Bulut deploy yapılmadı; isteğe bağlı bu teslim kalemi uygulanmıyor. Local gateway yalnızca 127.0.0.1'e bağlı.
 
-Operasyonel olarak gerçek sağlayıcı doğrulaması için iki API anahtarı ve hesaplarda yeterli erişim/bakiye gerekir. Uygulama, PostgreSQL/River entegrasyon testleri ve Docker kurulumu tamamlandı; çalıştırılmış kontroller ve henüz bekleyen canlı kabul adımları [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) dosyasında tutulur. Yukarıdaki liste planın kabul ölçütleridir; canlı sağlayıcı kanıtı test kanıtından ayrı değerlendirilir.
+Uygulama, PostgreSQL/River entegrasyon testleri, Docker kurulumu ve canlı üretim kabulü tamamlandı. Çalıştırılmış kontroller ve billing yetkisi sınırı [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) dosyasında tutulur. Yukarıdaki liste planın kabul ölçütleridir; canlı sağlayıcı kanıtı test kanıtından ayrı değerlendirilir.
 
 ## Resmi kaynaklar
 
