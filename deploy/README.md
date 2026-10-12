@@ -86,7 +86,17 @@ PostgreSQL ve görseller `database`/`artifacts` volume'larında, TLS verisi `cad
 
 DB yedeğini `umask 077` ile `docker compose ... exec -T db pg_dump -U flowkit -Fc flowkit > backup.dump` olarak alın; tamamlanmış görsellerin artifacts volume'unu da yedekleyin ve sunucu dışında saklayın. Çalışan PostgreSQL data dosyalarını sıradan dosya kopyasıyla yedeklemek yerine pg_dump kullanın. Tam bir restore provası yapılmadan yedekleme doğrulanmış sayılmaz. Kamatera trial bitişi ve ücret koşulları kullanıcı hesabından takip edilir; hosting kapanmadan yedekler alınır.
 
-## Durum
+## Güncel durum — 12 Ekim 2026
+
+14cf20a kod sürümü [CI 38241210130](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38241210130) backend/dashboard/compose job'larının tamamını geçti ve VPS'e build/recreate edildi. API/DB/gate healthy, dashboard/proxy/worker running; init/bootstrap exited(0). Provider anahtarları mode 600 server `.env` içindedir; billing okuma yetkisi olmadığı için BILLING_DISABLED=true ve ayrı billing anahtarı boştur. Worker açılmadan önce kuyruk boşluğu ve accounting'in kapalı olduğu doğrulandı. Yeni OpenRouter/fal/pricing/polling/billing çağrısı yapılmadı.
+
+İki güncel workflow (ürün revision 3/Schnell, etkinlik revision 1/Dev), geçmiş üç gerçek başarılı run ve üç artifact yerel kabul ortamından taşındı. Orijinal snapshot/timestamp/initial estimate/actual bilgileri korundu; River işleri taşınmadı. Görseller public authenticated API'den HTTP 200 ve orijinaliyle SHA-256 eşitliğiyle doğrulandı. Yeni sağlayıcısız deployment kontrolü edbca753-ebe1-4e96-aef3-90412a1e5f79 succeeded; message + approved:false girdi, input node izi, gerçek ayrı worker ve idempotency replay doğrulandı. Kontrol workflow'u soft-delete edildi; run geçmişi korunur. DB'de dört run, üç artifact, altı tarihsel provider request ve bir tamamlanmış River job vardır.
+
+Her güncel container log satırı JSON/context kontrolünü geçti: API 594/worker 9/DB 28/dashboard 35/gate 606/proxy 333/init 6/bootstrap 5 satır. Aktif run/job yok; provider request sayısı altı tarihsel kayıt olarak kaldı. Üç geçmiş run objesinin tamamı source API ile eşitliğiyle doğrulandı. Yerel production smoke PostgreSQL/Nginx restart, kalıcı veri ve native PG ERROR logunu da kapsar. Public HTTPS/login/logout/CSRF/asset kontrolleri tekrar başarılıdır. [Anahtarsız tamamlama kanıtı](../docs/evidence/deployment-fixes.json), [form regression ekranı](../docs/input-regression-fixed.jpg), [case kontrol rehberi](../docs/CASE_AUDIT.md).
+
+Yeni ücretli run başlatmak provider submit/completion ve gerekli pricing/polling/result çağrılarını yürütür; bu tamamlama turunda bunlar yeniden denenmedi. Agent'ın her live credential use için ayrı onay alma kuralı sürer. Fal billing yetkisini düzeltme çalışması kullanıcı talebiyle yapılmaz; bilinmeyen gerçek tutarlar null kalır.
+
+## Önceki kurulum kayıtları
 
 Production override yerelde ayrı, anahtarsız Compose ortamında test edildi: tek şifreli login, API/asset koruması, normal CA doğrulamasıyla HTTPS, Origin/CSRF reddi, logout, kapalı backend portları, varsayılan kapalı worker, açıkça başlatılan sağlayıcısız worker run'ı/idempotency, gate/proxy restart sonrası aynı oturum ve JSON logların null bağlamı. Test kendi geçici container/volume'larını kaldırdı. Go/PostgreSQL/vet/sqlc/frontend kontrolleri de başarılı.
 

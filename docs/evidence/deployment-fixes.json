@@ -1,0 +1,104 @@
+{
+  "checked_at": "2026-10-12T11:19:01.017606+00:00",
+  "url": "https://flowkit.canhurkurtoglu.com",
+  "code_revision": "14cf20a6bd53eb6904736938a6114002c5de5830",
+  "historical_runs_imported": 3,
+  "artifacts": [
+    {
+      "artifact_id": "70266b82-d304-4ef6-80c1-9696e044f5d1",
+      "run_id": "a733fb1e-686e-4d78-8386-09ce5953a36a",
+      "model": "fal-ai/flux/schnell",
+      "sha256": "72e674b4976bd44a04b71791237d0eef0af549edc115c9e4bffec3419c2fd3c6",
+      "http_status": 200
+    },
+    {
+      "artifact_id": "f0f242b1-2b6d-4d1a-8925-6e136605d037",
+      "run_id": "217fb931-3af8-4313-89b2-436985798449",
+      "model": "fal-ai/flux/dev",
+      "sha256": "f931a8becb0cd6d353dc87dc8cd65f2262d751ce68b221534a5c11c9a2a1108f",
+      "http_status": 200
+    },
+    {
+      "artifact_id": "53c51066-5d9f-4c39-b758-15a831a44ac7",
+      "run_id": "614b472e-e6c8-4e17-b07d-995f4307b321",
+      "model": "fal-ai/flux/dev",
+      "sha256": "4f0bc4f908ea362604d0f175522424988ed8b6cf66b601b8fd86576e08e54eb5",
+      "http_status": 200
+    }
+  ],
+  "metadata_validation": [
+    {
+      "method": "POST",
+      "path": "/workflows/validate",
+      "status": 200,
+      "codes": [
+        "INVALID_WORKFLOW_ID",
+        "UNKNOWN_MODEL_ALIAS",
+        "UNRESOLVED_TEMPLATE_VARIABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workflows",
+      "status": 422,
+      "codes": [
+        "INVALID_WORKFLOW_ID",
+        "UNKNOWN_MODEL_ALIAS",
+        "UNRESOLVED_TEMPLATE_VARIABLE"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workflows/10000000-0000-4000-8000-000000000001",
+      "status": 422,
+      "codes": [
+        "INVALID_WORKFLOW_ID",
+        "UNKNOWN_MODEL_ALIAS",
+        "UNRESOLVED_TEMPLATE_VARIABLE",
+        "WORKFLOW_ID_MISMATCH"
+      ]
+    }
+  ],
+  "providerless_worker_check": {
+    "run_id": "edbca753-ebe1-4e96-aef3-90412a1e5f79",
+    "status": "succeeded",
+    "input": {
+      "message": "Deployment worker and typed input verified",
+      "approved": false
+    },
+    "idempotency_replay": 200,
+    "provider_requests": 0
+  },
+  "billing_enabled": false,
+  "provider_calls": 0,
+  "actual_fal_cost_verified": false,
+  "server_audit": {
+    "all_service_logs_json_context": {
+      "api": 594,
+      "worker": 9,
+      "db": 28,
+      "dashboard": 35,
+      "gate": 606,
+      "proxy": 333,
+      "init": 6,
+      "bootstrap": 5
+    },
+    "counts": {
+      "runs": 4,
+      "artifacts": 3,
+      "provider_requests": 6,
+      "nonterminal_runs": 0,
+      "active_jobs": 0
+    },
+    "worker": "running",
+    "billing_enabled": false,
+    "backend_ports_private": true,
+    "provider_keys_configured": true,
+    "env_mode": "600"
+  },
+  "historical_runs_equal_original_api": [
+    "a733fb1e-686e-4d78-8386-09ce5953a36a",
+    "217fb931-3af8-4313-89b2-436985798449",
+    "614b472e-e6c8-4e17-b07d-995f4307b321"
+  ]
+}
