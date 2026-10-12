@@ -2,6 +2,8 @@
 
 Referans: kullanıcının `C:\Users\PC\Downloads\case.txt` dosyası. İlk denetimdeki beş uygulama/deployment/dokümantasyon bulgusu tamamlandı. Kullanıcının kapsam dışında bıraktığı **fal billing yetkisi ve gerçek toplamı canlı doğrulama** için ek sorgu yapılmadı.
 
+Belgenin hiçbir cümlesini atlamadan incelemek için [paragraf paragraf orijinal metin ve kontrol raporu](CASE_PARAGRAPH_REVIEW.md) hazırlanmıştır. Her alıntı altında yapılan iş, durum, sahibi ve değerlendirici için ayrı inceleme yolu bulunur; [kaynak kopyası](CASE_SOURCE.txt) byte olarak korunur.
+
 Uygulama kodu `14cf20a6bd53eb6904736938a6114002c5de5830` sürümünde GitHub'a gönderildi ve VPS'e build/recreate edildi. [Bu kod sürümünün CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38241210130) backend/dashboard/compose job'larında başarılıdır. Sonraki dokümantasyon commit'leri uygulama image'larını değiştirmez.
 
 ## Güncel ve doğrulanmış durum

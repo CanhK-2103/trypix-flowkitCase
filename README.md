@@ -6,6 +6,8 @@ JSON olarak tanımlanan doğrusal AI workflow'larını kaydeden, doğrulayan ve 
 
 Repository: [CanhK-2103/trypix-flowkitCase](https://github.com/CanhK-2103/trypix-flowkitCase). Gerçek çıktılarla dashboard: [ürün / Schnell](docs/dashboard-schnell-live.jpg), [etkinlik / Dev](docs/dashboard-event-live.jpg).
 
+Case'i değerlendirmek için [paragraf paragraf orijinal metin, yapılan iş ve kontrol yolları](docs/CASE_PARAGRAPH_REVIEW.md) ile [22 adımlı teknik denetim](docs/CASE_AUDIT.md) bulunur. Orijinal `case.txt` değiştirilmeden korunmuştur; teknik test, önceki gerçek kabul kanıtı ve kişisel kod hâkimiyeti ayrı belirtilir.
+
 ## Çalıştırma
 
 ```sh

@@ -1,0 +1,718 @@
+{
+  "source_name": "case.txt",
+  "source_sha256": "0135af2fa51eb2b83ddf96167442c58c42d0ee98b6d91247526a1bb24973e1e1",
+  "source_bytes": 13845,
+  "source_lines": 199,
+  "source_copy": "docs/CASE_SOURCE.txt",
+  "report": "docs/CASE_PARAGRAPH_REVIEW.md",
+  "paragraph_count": 88,
+  "source_copy_byte_identical": true,
+  "report_all_source_text_identical_after_line_ending_normalization": true,
+  "new_provider_calls": 0,
+  "sections": [
+    {
+      "number": 1,
+      "source_start": 1,
+      "source_end": 4,
+      "source_ends_with_newline": true,
+      "title": "Amaç: veriyle tanımlanan asenkron backend",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 2,
+      "source_start": 5,
+      "source_end": 5,
+      "source_ends_with_newline": true,
+      "title": "Tanımsız alanlarda mühendislik kararları",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 3,
+      "source_start": 6,
+      "source_end": 8,
+      "source_ends_with_newline": true,
+      "title": "API ile tanımlanabilen workflow sistemi",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 4,
+      "source_start": 9,
+      "source_end": 12,
+      "source_ends_with_newline": true,
+      "title": "Önce doğrudan OpenRouter → fal denemesi",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 5,
+      "source_start": 13,
+      "source_end": 15,
+      "source_ends_with_newline": true,
+      "title": "JSON tanımının DB'de saklanması ve arka planda yürütme",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 6,
+      "source_start": 16,
+      "source_end": 18,
+      "source_ends_with_newline": true,
+      "title": "Hata, retry ve açıklanabilir çalıştırma izi",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 7,
+      "source_start": 19,
+      "source_end": 20,
+      "source_ends_with_newline": true,
+      "title": "İki farklı workflow ve çıktı modeli",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 8,
+      "source_start": 21,
+      "source_end": 23,
+      "source_ends_with_newline": true,
+      "title": "Kod/restart olmadan yeni model ve workflow",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 9,
+      "source_start": 24,
+      "source_end": 26,
+      "source_ends_with_newline": true,
+      "title": "Dashboard, hata testleri, Compose ve README",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 10,
+      "source_start": 27,
+      "source_end": 29,
+      "source_ends_with_newline": true,
+      "title": "Ayrıntı bölümlerine geçiş",
+      "status": "Bilgilendirme / kapsam açıklaması; ayrı bir geliştirme işi değil."
+    },
+    {
+      "number": 11,
+      "source_start": 30,
+      "source_end": 42,
+      "source_ends_with_newline": true,
+      "title": "Kapsama giren alanlar",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 12,
+      "source_start": 43,
+      "source_end": 54,
+      "source_ends_with_newline": true,
+      "title": "Kapsam dışındaki alanlar",
+      "status": "Kapsama uygun; listedeki özellikler zorunlu değil."
+    },
+    {
+      "number": 13,
+      "source_start": 55,
+      "source_end": 58,
+      "source_ends_with_newline": true,
+      "title": "HTTP API işlemleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 14,
+      "source_start": 59,
+      "source_end": 59,
+      "source_ends_with_newline": true,
+      "title": "Dashboard API'yi kullanır",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 15,
+      "source_start": 60,
+      "source_end": 60,
+      "source_ends_with_newline": true,
+      "title": "Endpoint listesi ve örnek istekler",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 16,
+      "source_start": 61,
+      "source_end": 63,
+      "source_ends_with_newline": true,
+      "title": "Model kayıtlarının API verisi olması",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 17,
+      "source_start": 64,
+      "source_end": 70,
+      "source_ends_with_newline": true,
+      "title": "Dört adımlı Schnell → Dev kabul senaryosu",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 18,
+      "source_start": 71,
+      "source_end": 74,
+      "source_ends_with_newline": true,
+      "title": "Uyumlu model sözleşmesinin sınırı",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 19,
+      "source_start": 75,
+      "source_end": 75,
+      "source_ends_with_newline": true,
+      "title": "Node modelRef alanında alias",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 20,
+      "source_start": 76,
+      "source_end": 77,
+      "source_ends_with_newline": true,
+      "title": "Kayıtsız modele izin vermeme",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 21,
+      "source_start": 78,
+      "source_end": 80,
+      "source_ends_with_newline": true,
+      "title": "Graf JSON sözleşmesi",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 22,
+      "source_start": 81,
+      "source_end": 81,
+      "source_ends_with_newline": true,
+      "title": "Node ve port türleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 23,
+      "source_start": 82,
+      "source_end": 83,
+      "source_ends_with_newline": true,
+      "title": "Şablon değişkenleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 24,
+      "source_start": 84,
+      "source_end": 84,
+      "source_ends_with_newline": true,
+      "title": "Doğrusal ve bağlı akış",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 25,
+      "source_start": 85,
+      "source_end": 88,
+      "source_ends_with_newline": true,
+      "title": "Create/update zorunlu ve toplu doğrulama",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 26,
+      "source_start": 89,
+      "source_end": 90,
+      "source_ends_with_newline": true,
+      "title": "Run'ın hemen kabul edilmesi",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 27,
+      "source_start": 91,
+      "source_end": 91,
+      "source_ends_with_newline": true,
+      "title": "Node'ların sıra ve veri aktarımı",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 28,
+      "source_start": 92,
+      "source_end": 94,
+      "source_ends_with_newline": true,
+      "title": "Fal queue ve request ID'nin hemen saklanması",
+      "status": "Tamamlandı; adaptör/mock, PostgreSQL/process-kill ve önceki gerçek run kanıtları var."
+    },
+    {
+      "number": 29,
+      "source_start": 95,
+      "source_end": 96,
+      "source_ends_with_newline": true,
+      "title": "Tipli hata ve maksimum üç attempt",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 30,
+      "source_start": 97,
+      "source_end": 97,
+      "source_ends_with_newline": true,
+      "title": "Başarısız node ve nedenin kalıcı kaydı",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 31,
+      "source_start": 98,
+      "source_end": 101,
+      "source_ends_with_newline": true,
+      "title": "Mock testler ve gerçek demo ayrımı",
+      "status": "Tamamlandı; test ve gerçek kanıt birbirinden ayrılmıştır."
+    },
+    {
+      "number": 32,
+      "source_start": 102,
+      "source_end": 107,
+      "source_ends_with_newline": true,
+      "title": "Merkez şart: doğrudan iki adımlı gerçek deney",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 33,
+      "source_start": 108,
+      "source_end": 109,
+      "source_ends_with_newline": true,
+      "title": "Doğrudan deney → FlowKit eşleştirme tablosu",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 34,
+      "source_start": 110,
+      "source_end": 111,
+      "source_ends_with_newline": true,
+      "title": "İkinci workflow'un yalnız veri olarak eklenmesi",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 35,
+      "source_start": 112,
+      "source_end": 112,
+      "source_ends_with_newline": true,
+      "title": "İki görsel modelinin katalogda olması",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 36,
+      "source_start": 113,
+      "source_end": 115,
+      "source_ends_with_newline": true,
+      "title": "JSON log, bağlam ve provider error seviyesi",
+      "status": "Tamamlandı; unit/Compose ve tüm sekiz cloud servisinin log kontrolü var."
+    },
+    {
+      "number": 37,
+      "source_start": 116,
+      "source_end": 116,
+      "source_ends_with_newline": true,
+      "title": "Görsel yanında gerçek üretici model",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 38,
+      "source_start": 117,
+      "source_end": 118,
+      "source_ends_with_newline": true,
+      "title": "Run'da model/deneme/süre/hata sorularının cevabı",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 39,
+      "source_start": 119,
+      "source_end": 122,
+      "source_ends_with_newline": true,
+      "title": "Zorunlu test senaryoları",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 40,
+      "source_start": 123,
+      "source_end": 124,
+      "source_ends_with_newline": true,
+      "title": "GitHub'da paylaşım",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 41,
+      "source_start": 125,
+      "source_end": 127,
+      "source_ends_with_newline": true,
+      "title": "Tek komut, .env.example ve çalıştırma adımları",
+      "status": "Tamamlandı; temiz Compose kurulumu CI/smoke ile doğrulandı."
+    },
+    {
+      "number": 42,
+      "source_start": 128,
+      "source_end": 129,
+      "source_ends_with_newline": true,
+      "title": "Opsiyonel deployment ve şifre koruması",
+      "status": "Tamamlandı; public TLS/auth ve cloud servis kontrolleri var."
+    },
+    {
+      "number": 43,
+      "source_start": 130,
+      "source_end": 131,
+      "source_ends_with_newline": true,
+      "title": "Temel katalog işlevleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 44,
+      "source_start": 132,
+      "source_end": 132,
+      "source_ends_with_newline": true,
+      "title": "Temel workflow işlevleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 45,
+      "source_start": 133,
+      "source_end": 133,
+      "source_ends_with_newline": true,
+      "title": "Temel run işlevleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 46,
+      "source_start": 134,
+      "source_end": 135,
+      "source_ends_with_newline": true,
+      "title": "Temel dashboard işlevleri",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 47,
+      "source_start": 136,
+      "source_end": 137,
+      "source_ends_with_newline": true,
+      "title": "Backend dil tercihi",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 48,
+      "source_start": 138,
+      "source_end": 138,
+      "source_ends_with_newline": true,
+      "title": "Dashboard teknoloji tercihi",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 49,
+      "source_start": 139,
+      "source_end": 140,
+      "source_ends_with_newline": true,
+      "title": "Açık tasarım kararlarına yaklaşım",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 50,
+      "source_start": 141,
+      "source_end": 141,
+      "source_ends_with_newline": true,
+      "title": "Framework ve veritabanı seçimi",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 51,
+      "source_start": 142,
+      "source_end": 142,
+      "source_ends_with_newline": true,
+      "title": "Kuyruk ve worker seçimi",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 52,
+      "source_start": 143,
+      "source_end": 143,
+      "source_ends_with_newline": true,
+      "title": "Ek graf ayrıntıları",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 53,
+      "source_start": 144,
+      "source_end": 144,
+      "source_ends_with_newline": true,
+      "title": "Retry süreleri ve geçici hata tanımı",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 54,
+      "source_start": 145,
+      "source_end": 145,
+      "source_ends_with_newline": true,
+      "title": "Sonucun istemciye iletilmesi",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 55,
+      "source_start": 146,
+      "source_end": 147,
+      "source_ends_with_newline": true,
+      "title": "Görsel saklama seçimi",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 56,
+      "source_start": 148,
+      "source_end": 150,
+      "source_ends_with_newline": true,
+      "title": "Bonusların önceliği",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 57,
+      "source_start": 151,
+      "source_end": 152,
+      "source_ends_with_newline": true,
+      "title": "Bonus: worker yeniden başlatma dayanıklılığı",
+      "status": "Tamamlandı; bonusun izin verdiği test yoluyla gösterildi. Yeni ücretli fal isteği sırasında VPS kill demosu yapılmadı."
+    },
+    {
+      "number": 58,
+      "source_start": 153,
+      "source_end": 154,
+      "source_ends_with_newline": true,
+      "title": "Bonus: idempotency key",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 59,
+      "source_start": 155,
+      "source_end": 155,
+      "source_ends_with_newline": true,
+      "title": "Bonus: node tahminleri ve toplam maliyet izi",
+      "status": "Case'in tahmini maliyet bonusu tamamlandı. Ek fal gerçek ücret/gerçek toplam canlı doğrulaması kullanıcı kararıyla kapsam dışı."
+    },
+    {
+      "number": 60,
+      "source_start": 156,
+      "source_end": 157,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: motor dayanıklılığı",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 61,
+      "source_start": 158,
+      "source_end": 158,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: doğrulama",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 62,
+      "source_start": 159,
+      "source_end": 159,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: temiz soyutlamalar",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 63,
+      "source_start": 160,
+      "source_end": 160,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: ilk akışın taşınması",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 64,
+      "source_start": 161,
+      "source_end": 161,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: gözlemlenebilirlik",
+      "status": "Tamamlandı; testli ve cloud'da kontrol edildi."
+    },
+    {
+      "number": 65,
+      "source_start": 162,
+      "source_end": 162,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: hata yolu testleri",
+      "status": "Tamamlandı; mock ve/veya PostgreSQL testleriyle doğrulandı."
+    },
+    {
+      "number": 66,
+      "source_start": 163,
+      "source_end": 163,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: kod düzeni ve kalite",
+      "status": "Teknik kontroller tamamlandı; mühendislik kalite değerlendirmesi değerlendiriciye ait."
+    },
+    {
+      "number": 67,
+      "source_start": 164,
+      "source_end": 164,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: AI kullanımının şeffaflığı",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 68,
+      "source_start": 165,
+      "source_end": 165,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: gereksinim uygunluğu",
+      "status": "Teknik gereksinimler için kanıt sunuldu; insan değerlendirmesi ve açık sınırlar ayrı belirtildi."
+    },
+    {
+      "number": 69,
+      "source_start": 166,
+      "source_end": 166,
+      "source_ends_with_newline": true,
+      "title": "Değerlendirme: görsel kalitesi kapsam dışında",
+      "status": "Kapsama uygun."
+    },
+    {
+      "number": 70,
+      "source_start": 167,
+      "source_end": 170,
+      "source_ends_with_newline": true,
+      "title": "AI talimat dosyası ve hataların anlatılması",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 71,
+      "source_start": 171,
+      "source_end": 174,
+      "source_ends_with_newline": true,
+      "title": "Adayın kodu açıklayabilmesi",
+      "status": "Teknik açıklama malzemesi hazır; kişisel kod hâkimiyeti senin incelemen ve değerlendiricinin görüşmesiyle doğrulanmalı."
+    },
+    {
+      "number": 72,
+      "source_start": 175,
+      "source_end": 176,
+      "source_ends_with_newline": true,
+      "title": "Teslim: Compose servis ve dashboard",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 73,
+      "source_start": 177,
+      "source_end": 177,
+      "source_ends_with_newline": true,
+      "title": "Teslim: deployment URL ve erişim bilgisi",
+      "status": "URL/koruma tamamlandı; erişim şifresinin değerlendiriciye özel kanalla iletilmesi teslim edenin işi."
+    },
+    {
+      "number": 74,
+      "source_start": 178,
+      "source_end": 178,
+      "source_ends_with_newline": true,
+      "title": "Teslim: GitHub linki",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 75,
+      "source_start": 179,
+      "source_end": 180,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: mimari ve çalışma akışı",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 76,
+      "source_start": 181,
+      "source_end": 181,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: endpoint ve örnekler",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 77,
+      "source_start": 182,
+      "source_end": 182,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: graf şeması ve kurallar",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 78,
+      "source_start": 183,
+      "source_end": 183,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: hata sınıfları ve retry",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 79,
+      "source_start": 184,
+      "source_end": 184,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: eşleştirme ve iki örnek run",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 80,
+      "source_start": 185,
+      "source_end": 186,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: yeni model/workflow gerçek istekleri",
+      "status": "Tamamlandı; önceki onaylı gerçek sağlayıcı denemesiyle doğrulandı."
+    },
+    {
+      "number": 81,
+      "source_start": 187,
+      "source_end": 187,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: AI ile çalışma",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 82,
+      "source_start": 188,
+      "source_end": 188,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: bir hafta daha olsaydı",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 83,
+      "source_start": 189,
+      "source_end": 190,
+      "source_ends_with_newline": true,
+      "title": "Teslim README: bonuslar",
+      "status": "Tamamlandı."
+    },
+    {
+      "number": 84,
+      "source_start": 191,
+      "source_end": 192,
+      "source_ends_with_newline": true,
+      "title": "Bütçe: sağlayıcı ücretinin karşılanması",
+      "status": "Bilgilendirme / kapsam açıklaması; ayrı bir geliştirme işi değil."
+    },
+    {
+      "number": 85,
+      "source_start": 193,
+      "source_end": 193,
+      "source_ends_with_newline": true,
+      "title": "Bütçe: sağlanan API anahtarları",
+      "status": "Anahtar yapılandırması tamamlandı; e-posta teslimi uygulama kapsamı dışında."
+    },
+    {
+      "number": 86,
+      "source_start": 194,
+      "source_end": 195,
+      "source_ends_with_newline": true,
+      "title": "Bütçe: 5/2 USD limit ve mock testler",
+      "status": "Mock ve planlı bütçe yönetimi tamamlandı; fal gerçek bakiye/tüketim doğrulaması kullanıcı talebiyle kapsam dışı."
+    },
+    {
+      "number": 87,
+      "source_start": 196,
+      "source_end": 196,
+      "source_ends_with_newline": true,
+      "title": "Bütçe: limit aşımı ve kontrol sorumluluğu",
+      "status": "Bütçe yönetimi kaydı var; provider tarafından kapatma dış politika, gerçek fal toplamı doğrulanmış değil."
+    },
+    {
+      "number": 88,
+      "source_start": 197,
+      "source_end": 199,
+      "source_ends_with_newline": false,
+      "title": "Bütçe: model gerekçesi ve ucuz çözünürlük",
+      "status": "Tamamlandı."
+    }
+  ]
+}

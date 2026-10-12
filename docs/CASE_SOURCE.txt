@@ -1,0 +1,199 @@
+Amaç
+Bu çalışma, AI üretim akışlarını (workflow) kod yerine veri olarak tanımlayan ve asenkron çalıştıran küçük bir
+backend platformunun (FlowKit) geliştirilmesini hedefler. Değerlendirmenin odağı backend'dir; üretilen
+görsellerin kalitesi değerlendirilmez.
+Açıkça tarif edilmeyen alanlar adayın kendi mühendislik yaklaşımıyla tamamlanmalıdır.
+Görev Tanımı
+Sizden, AI üretim akışlarını kod yazmadan tanımlayıp çalıştırabildiğimiz küçük bir backend sistemi kurmanızı
+istiyoruz.
+İşe basit bir akışı doğrudan API çağrılarıyla deneyerek başlayın: önce bir LLM (OpenRouter), kullanıcının
+girdiği kısa bir metinden (ör. bir ürün açıklaması) görsel üretim prompt'u yazsın; ardından bir görsel modeli
+(fal.ai) bu prompt'la bir görsel üretsin. Bu iki adımı çalıştırıp prompt yapısını ve modellerin nasıl çağrıldığını
+anladıktan sonra, aynı akışı kendi geliştireceğiniz sisteme taşıyacaksınız.
+Geliştireceğiniz sistemde bu akış kodun içine yazılmayacak; adımları, kullanılan modelleri ve prompt'ları
+anlatan bir JSON tanımı olarak veritabanında duracak. Sistem bu tanımı kaydederken doğrulayacak ve bir
+kullanıcı akışı çalıştırdığında adımları arka planda sırayla fal.ai ve OpenRouter'a istek göndererek yürütecek.
+Bir adım hata verirse sistem bunu anlamlı şekilde ele alacak (gerekiyorsa yeniden deneyecek) ve sonunda her
+çalıştırmada hangi adımda ne olduğunu, hangi modelin kullanıldığını ve bir hata olduysa nedenini
+gösterebilecek.
+Sistemde en az iki farklı akış olmalı ve bu akışlar farklı görsel modelleri kullanmalıdır. Her üretimde, çıktıyı
+hangi modelin ürettiği ekranda görünmelidir.
+Sistemin asıl sınavı esnekliğidir: kurduğunuz yapıya ikinci, farklı bir akışı ve aynı sağlayıcıdan yeni bir
+modeli kod değiştirmeden, servisi yeniden başlatmadan, yalnızca API veya dashboard üzerinden ekleyebiliyor
+olmalısınız.
+Bunlara ek olarak sistemi yönetmek için basit bir dashboard, hata senaryolarını da kapsayan testler, tek
+komutla ( docker compose up ) ayağa kalkan bir kurulum ve kararlarınızı anlatan bir README teslim etmeniz
+bekleniyor. Görsellerin kalitesi değil, sistemin doğru, dayanıklı ve genişletilebilir çalışması değerlendirilecektir.
+Aşağıdaki bölümler bu isteklerin ayrıntılarını içerir.
+
+
+Kapsam
+Bu çalışma şu alanlara odaklanır:
+Backend servis mimarisi ve API tasarımı
+Workflow tanımı ve doğrulama
+Asenkron çalıştırma (job/worker), hata ve retry
+yönetimi
+AI sağlayıcı entegrasyonu (fal.ai ve OpenRouter)
+Gözlemlenebilirlik (yapılandırılmış log ve
+çalıştırma izi)
+Basit bir yönetim paneli (dashboard)
+Çalıştırma ortamı (Docker Compose)
+
+
+Kapsam dışı:
+Sürükle-bırak görsel canvas (JSON editörü
+yeterlidir)
+Kullanıcı girişi ve yetkilendirme
+Kredi/ödeme sistemi
+Ortamlar arası (staging → production) promotion
+Tek sıra halinde ilerlemeyen akışlar (bir adımın
+çıktısının birden fazla adıma gitmesi, adımların
+paralel çalışması) ve bir workflow'un başka bir
+workflow'u çağırması
+Çıktı kalitesinin iyileştirilmesi
+
+Gereksinimler
+API
+Tüm işlemler bir HTTP API üzerinden yapılabilmelidir: model kataloğu; workflow oluşturma, listeleme,
+güncelleme, silme ve doğrulama; run başlatma, durum ve detay sorgulama.
+Dashboard bu API'yi kullanmalıdır; dashboard'da yapılabilen her işlem API ile de yapılabilmelidir.
+README'de endpoint listesi ve örnek istekler ( curl veya bir Postman/OpenAPI dosyası) bulunmalıdır.
+Model kataloğu
+Modeller API üzerinden kaydedilebilmelidir (dashboard'da katalog ekranı gerekmez). Aynı sağlayıcıda yeni
+bir model eklemek kod değişikliği gerektirmemelidir.
+Bu, çalışmanın en önemli kabul koşullarından biridir ve teslimden önce sizin tarafınızdan denenmiş
+olmalıdır. Örnek senaryo:
+1. Workflow'unuz fal-ai/flux/schnell modeliyle çalışıyor.
+2. Yalnızca API isteğiyle katalogdaki fal-ai/flux/dev modelini kaydedersiniz.
+3. Workflow'da ilgili node'un model referansını API ile yeni modele çevirir ve workflow'u çalıştırırsınız.
+4. Run yeni modelle tamamlanır. Bu süreçte kod değişmez, servis yeniden başlatılmaz, deploy
+yapılmaz.
+Bu kural, aynı parametreleri alan modeller içindir (ör. flux/schnell ile flux/dev ; ikisi de prompt ve
+image_size alır). Sisteminizin henüz göndermediği bir parametreyi bekleyen bir model için (ör. girdi
+olarak görsel listesi isteyen bir model) küçük bir kod değişikliği gerekmesi kabul edilebilir; bu sınırı
+README'de açıklayın.
+Node'lar sağlayıcıyı doğrudan değil, katalogdaki alias 'ı referans almalıdır.
+Katalogda olmayan bir modele referans veren workflow kaydedilememelidir. Sistem hiçbir koşulda modeli
+"tahmin etmemelidir".
+Workflow tanımı ve doğrulama
+Workflow bir JSON graf olarak tanımlanmalıdır: node'lar ( id , kind , modelRef , params , prompt
+şablonu) ve edge'ler ( from , fromPort , to , toPort ).
+Node tipleri ( kind ): input , llm , image , output . Port tipleri: text , prompt , image .
+Prompt şablonları {{değişken}} biçiminde girdi değerlerine ve önceki node çıktılarına referans
+verebilmelidir.
+Akış doğrusal olmalıdır: tek input , tek output , aradaki her node'un en fazla bir girişi ve bir çıkışı vardır.
+Workflow kaydedilirken (oluşturma ve güncellemede) doğrulama zorunludur ve tek bir hata mesajı değil,
+bulguların listesini döndürmelidir. En az şunlar kontrol edilmelidir: döngü, bir adımın birden fazla adıma
+bağlanması, bağlanmamış zorunlu port, uyumsuz port tipi, katalogda olmayan model, çözülemeyen şablon
+değişkeni.
+Çalıştırma
+POST /workflows/{id}/runs hemen bir run_id dönmeli, çalıştırma arka planda (worker) yapılmalıdır.
+Node'lar sırayla çalıştırılmalı, her node bir önceki node'un çıktısını kullanabilmelidir.
+fal entegrasyonu fal'ın kuyruk (queue) modelini kullanmalıdır: istek gönderilir, durum sorgulanır, sonuç
+alınır. Sağlayıcıdan dönen istek kimliği ( provider_request_id ) gönderimden hemen sonra
+kaydedilmelidir.
+Hatalar tiplendirilmelidir (ör. sağlayıcı zaman aşımı, sağlayıcı 5xx, hatalı girdi, kayıtsız model). Yalnızca
+geçici sağlayıcı hataları node bazında yeniden denenmelidir (en fazla 3 deneme, artan bekleme).
+Başarısız bir run'ın hangi node'da ve neden başarısız olduğu kalıcı olarak kaydedilmelidir.
+Sağlayıcılar
+Testler gerçek sağlayıcıları çağırmamalıdır. Testlerde sağlayıcı çağrılarının yerine sahte (mock) bir yanıt
+kullanın: sabit bir çıktı dönsün ve test istediğinde hata üretebilsin (ör. zaman aşımı, 5xx). Demo ve
+README'deki örnekler gerçek sağlayıcılarla çalışmalıdır.
+İlk akışın taşınması (çalışmanın merkezi)
+En az iki adımlı bir akışı önce doğrudan API çağrılarıyla deneyin: bir LLM adımı (OpenRouter) girdiden
+prompt üretir, bir görsel modeli (fal.ai) bu prompt'la görsel üretir. Konu serbesttir (ör. ürün açıklamasından
+
+katalog görseli). Modellerin API dokümantasyonu ve parametreleri fal.ai ve OpenRouter'ın herkese açık
+model sayfalarında yer alır.
+Bu akışı FlowKit'e bir workflow olarak taşıyın. Denemede kullandığınız her adımın (model, prompt,
+parametreler) sisteminizde neye karşılık geldiğini README'de bir eşleştirme tablosuyla gösterin.
+Ardından ikinci, farklı bir workflow'u yalnızca veri olarak (API veya dashboard üzerinden) ekleyin. Bu
+işlem kod değişikliği ve deploy gerektirmemelidir.
+İki workflow'un görsel adımları farklı modeller kullanmalıdır; her iki model de katalogda kayıtlı olmalıdır.
+Gözlemlenebilirlik
+Her log satırı yapılandırılmış (JSON) olmalı ve en az run_id , node_id , attempt taşımalıdır. Hatalar da
+(sağlayıcıdan dönen hata kodu ve mesajıyla) error seviyesinde loglanmalıdır.
+Dashboard'da her üretimin yanında, çıktıyı gerçekte hangi modelin ürettiği gösterilmelidir.
+Bir run'ın detayından şu sorular cevaplanabilmelidir: Her node'da hangi model kullanıldı, kaç deneme
+yapıldı, ne kadar sürdü? Başarısızsa hangi node'da ve neden?
+Testler
+En az şunları kapsamalıdır: doğrulamanın en az üç farklı kuralı reddetmesi; mock sağlayıcıyla başarılı bir
+run; geçici hatada retry ve ardından başarı; kalıcı hatada run'ın doğru node ve hata koduyla başarısız
+olması; workflow ve katalog için temel CRUD.
+Paylaşım ve çalıştırma
+Kod GitHub'da olmalıdır; public ya da trypix.ai@gmail.com adresine erişim verilmiş private repo.
+Sistemin tamamı (API, worker, veritabanı, dashboard) docker compose up ile tek komutla ayağa
+kalkmalıdır. Gerekli anahtarlar için bir .env.example dosyası bulunmalı, çalıştırma adımları README'de
+anlatılmalıdır.
+Bir platforma (ör. Vercel, Railway) deploy etmek isteğe bağlıdır ve artı olarak değerlendirilir. Deploy
+ederseniz sistemi herkese açık bırakmayın (basit bir şifre koruması yeterlidir).
+Temel İşlevler
+Model kataloğu (API): kayıt, listeleme, devre dışı bırakma.
+Workflow: oluşturma, listeleme, güncelleme, silme, doğrulama (bulgu listesi).
+Run: başlatma, durum sorgulama, adım adım iz (girdi, çıktı, model, deneme, süre, hata).
+Dashboard: workflow listesi, JSON editörü + doğrula/kaydet butonu, girdi formuyla çalıştırma, run geçmişi
+ve run detayı.
+Dil Tercihi
+Backend'in Go ile geliştirilmesini tercih ediyoruz. Bu bir zorunluluk değildir; farklı bir dille de geliştirebilirsiniz.
+Dashboard için teknoloji serbesttir.
+Açık Tasarım Kararları
+Aşağıdakiler bilinçli olarak tanımsız bırakılmıştır ve değerlendirmenin parçasıdır:
+Framework ve veritabanı
+Kuyruk/worker mekanizması (veritabanı tabanlı kuyruk, Redis, ayrı süreç vb.)
+Graf JSON'unun zorunlu alanlar dışındaki ayrıntıları
+Retry bekleme süreleri ve hangi hataların "geçici" sayıldığı
+Sonucun istemciye iletilmesi (polling, SSE, WebSocket)
+Görsel çıktıların saklanması
+
+Opsiyonel Bonus
+Zorunlu kısımları tamamladıktan sonra vaktiniz kalırsa, aşağıdaki bonuslardan bir veya birkaçını
+ekleyebilirsiniz. Bonuslar zorunlu değildir; önceliğiniz zorunlu gereksinimlerin eksiksiz ve çalışır olmasıdır.
+Worker yeniden başlatma dayanıklılığı: Worker bir fal isteği sürerken çökerse, yeniden başladığında
+aynı isteği tekrar göndermeden kaldığı yerden devam etsin. Bunu bir testle ya da kısa bir kayıtla gösterin.
+Tekrar gönderime karşı koruma: Aynı istemci isteği iki kez gelirse ikinci bir run oluşmasın (idempotency
+key).
+Maliyet izi: Her adımın tahmini sağlayıcı maliyeti kaydedilsin ve run detayında toplamı gösterilsin.
+Değerlendirme Kriterleri
+Çalıştırma motorunun doğruluğu ve dayanıklılığı: asenkron akış, tipli hatalar, retry
+Doğrulama: hatalı bir workflow'un kaydedilmemesi, bulgu listesinin anlaşılırlığı
+Soyutlamaların temizliği: yeni model ve yeni workflow eklemek kod değişikliği gerektirmiyor
+İlk akışın sisteme taşınması ve eşleştirmenin netliği
+Gözlemlenebilirlik: bir run'da ne olduğunun logdan ve run detayından anlaşılabilmesi
+Testlerin hata yollarını da kapsaması
+Kod düzeni ve mühendislik kalitesi
+AI araçlarının kullanımının şeffaflığı
+Gereksinimlere uygunluk
+Çıktı (görsel) kalitesi değerlendirmeye dahil değildir.
+AI Araçları
+Claude Code, Codex, Cursor gibi AI kodlama araçlarının kullanımı serbesttir ve teşvik edilir. Repoya bu
+araçlar için kullandığınız proje talimat dosyasını (ör. CLAUDE.md , AGENTS.md ) ekleyin. README'de kısa bir
+bölümde nasıl çalıştığınızı anlatın: aracı neyde kullandınız, nerede yanlış yönlendirdi ve bunu nasıl fark ettiniz.
+Önemli: Değerlendirdiğimiz şey kodu kimin yazdığı değil, AI'ın ürettiği koda sizin ne kadar hâkim
+olduğunuzdur. Repodaki herhangi bir bölümün neden o şekilde yazıldığını açıklayabilmeniz ve
+kararlarınızı savunabilmeniz beklenir. Açıklayamadığınız bir kod, yazılmamış kabul edilir.
+
+Teslimat
+docker compose up ile çalışan servis ve dashboard
+(İsteğe bağlı) deploy edilmiş ortamın URL'i ve erişim bilgisi
+GitHub repository linki
+Kısa bir README:
+Mimari genel bakış ve çalıştırma akışı
+Endpoint listesi ve örnek istekler
+Graf JSON şeması ve doğrulama kuralları
+Hata sınıfları ve retry politikası
+İlk akış → FlowKit eşleştirme tablosu ve iki workflow'un örnek run'ları
+"Yeni bir model / workflow nasıl eklenir" bölümü; yukarıdaki yeni model senaryosunun gerçek API
+istekleri ve sonuç run'ıyla birlikte
+AI araçlarıyla nasıl çalıştığınız
+Bir hafta daha olsaydı neyi farklı yapacağınız (tek paragraf)
+Opsiyonel bonus (eklediyseniz)
+
+Üretim Ortamı ve Bütçe
+Sağlayıcı maliyetleri tarafımızca karşılanmaktadır.
+Size özel fal.ai ve OpenRouter API anahtarları e-posta ile iletilecektir.
+Anahtarların aday başına üst limiti: fal.ai 5 USD, OpenRouter 2 USD. Gereksiz istek göndermemeye dikkat
+edin; testlerde mock sağlayıcıyı kullanın.
+Limiti aşan anahtarlar kapatılır. Bütçe yönetimi değerlendirmenin parçasıdır.
+Not: Çıktı kalitesi değerlendirilmediği için en ucuz modelleri kullanabilirsiniz (ör. fal'da hızlı/düşük
+maliyetli görsel modelleri ve düşük çözünürlük, OpenRouter'da düşük maliyetli metin modelleri). Model
+seçimi size aittir; tercihinizin gerekçesini README'de kısaca belirtin.
