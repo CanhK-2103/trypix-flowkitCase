@@ -359,6 +359,7 @@ p {
   font-weight: 400;
 }
 textarea,
+select,
 input:not([type="checkbox"]) {
   display: block;
   width: 100%;
@@ -376,6 +377,7 @@ textarea {
   line-height: 1.8;
 }
 textarea:focus,
+select:focus,
 input:focus {
   border-color: #6c997f;
   box-shadow: 0 0 0 3px #7f9e8010;

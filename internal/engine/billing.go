@@ -16,6 +16,9 @@ type billingProvider interface {
 // ReconcileCosts runs independently after generation. Billing failures never
 // change a successful run into a failed run or resend a generation request.
 func (e *Engine) ReconcileCosts(ctx context.Context, id string) error {
+	if e.Config.BillingDisabled {
+		return nil
+	}
 	r, err := e.Store.LoadRun(ctx, id)
 	if err != nil {
 		return err

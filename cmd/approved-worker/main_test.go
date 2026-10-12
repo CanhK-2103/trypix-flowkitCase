@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -100,9 +101,11 @@ func TestApprovalPipelineWithLocalHTTPOnly(t *testing.T) {
 				t.Fatal("untracked run executed")
 			}
 			control := worker.handler()
+			var lastControlResponse string
 			invoke := func(path string, body any) int {
 				res := httptest.NewRecorder()
 				control.ServeHTTP(res, httptest.NewRequest(http.MethodPost, path, strings.NewReader(string(domain.JSON(body)))))
+				lastControlResponse = res.Body.String()
 				return res.Code
 			}
 			if invoke("/track", domain.Object{"run_id": r.ID}) != 202 {
@@ -123,14 +126,15 @@ func TestApprovalPipelineWithLocalHTTPOnly(t *testing.T) {
 						t.Fatal("automatic extra call")
 					}
 					op = nextOperation(store.run, cfg) // A new wait is durably recorded.
-					a := approval{Operation: op, ID: time.Now().String()}
+					// Wall-clock timestamps can repeat on Windows; approvals need unique IDs.
+					a := approval{Operation: op, ID: fmt.Sprintf("fixture-approval-%d", approvals)}
 					stale := a
 					stale.Operation.Version--
 					if invoke("/approve", stale) != 409 {
 						t.Fatal("stale grant accepted")
 					}
 					if invoke("/approve", a) != 202 {
-						t.Fatal("grant")
+						t.Fatal("grant", lastControlResponse)
 					}
 					if invoke("/approve", a) != 409 {
 						t.Fatal("duplicate grant accepted")

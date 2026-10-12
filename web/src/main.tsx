@@ -19,6 +19,7 @@ import {
 } from "./api";
 import type { Run, Workflow } from "./types";
 import { Money, ActualMoney, QuotePanel, RunCosts } from "./Costs";
+import { WorkflowInput } from "./WorkflowInput";
 import "./style.css";
 const JsonEditor = lazy(() =>
   import("./JsonEditor").then((module) => ({ default: module.JsonEditor })),
@@ -85,14 +86,21 @@ function ErrorBox({ error }: { error: Error | null | undefined }) {
 }
 function App() {
   const qc = useQueryClient();
+  const capabilities = useQuery({
+    queryKey: ["capabilities"],
+    queryFn: () => api<{ billing_enabled: boolean }>("/capabilities"),
+    staleTime: 60_000,
+  });
   const session = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       try {
         const response = await fetch("/auth/session");
-        const value = await response.json() as { authenticated?: boolean };
+        const value = (await response.json()) as { authenticated?: boolean };
         return response.ok && value.authenticated === true;
-      } catch { return false; } // Local Compose has no production gate.
+      } catch {
+        return false;
+      } // Local Compose has no production gate.
     },
     retry: false,
     staleTime: Infinity,
@@ -108,9 +116,6 @@ function App() {
   const loaded = useRef("");
   const [findings, setFindings] = useState<Finding[] | null>(null);
   const [validated, setValidated] = useState(false);
-  const [values, setValues] = useState<Record<string, unknown>>({
-    description: "",
-  });
   const [runID, setRunID] = useState("");
   const replay = useRef<{ body: string; key: string } | null>(null);
   const selectedWorkflow = workflows.data?.find((w) => w.id === selected);
@@ -126,7 +131,6 @@ function App() {
       setDirty(false);
       setFindings(null);
       setValidated(false);
-      setValues({ description: "" });
     }
   }, [selected, selectedWorkflow]);
   let parsed: Workflow | undefined;
@@ -175,7 +179,7 @@ function App() {
     },
   });
   const run = useMutation({
-    mutationFn: () => {
+    mutationFn: (values: Record<string, unknown>) => {
       const body = JSON.stringify({ input: values });
       const fingerprint = selected + "|" + body;
       if (!replay.current || replay.current.body !== fingerprint)
@@ -220,24 +224,6 @@ function App() {
       void qc.invalidateQueries({ queryKey: ["runs"] });
     }
   }, [detail.data, qc]);
-  const inputNode = selectedWorkflow?.definition.nodes.find(
-    (n) => n.kind === "input",
-  );
-  const schema = inputNode?.params?.inputSchema as
-    | {
-        properties?: Record<
-          string,
-          {
-            type: string;
-            minLength?: number;
-            maxLength?: number;
-            minimum?: number;
-            maximum?: number;
-          }
-        >;
-        required?: string[];
-      }
-    | undefined;
   function selectWorkflow(id: string) {
     setSelected(id);
     setRunID("");
@@ -300,9 +286,13 @@ function App() {
           </div>
           {session.data ? (
             <form method="post" action="/auth/logout">
-              <button className="button ghost" type="submit">Çıkış</button>
+              <button className="button ghost" type="submit">
+                Çıkış
+              </button>
             </form>
-          ) : <span className="local-label">LOCAL WORKSPACE</span>}
+          ) : (
+            <span className="local-label">LOCAL WORKSPACE</span>
+          )}
         </header>
         <section className="content">
           <div className="page-heading">
@@ -434,83 +424,34 @@ function App() {
                           </React.Fragment>
                         ))}
                       </div>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          run.mutate();
-                        }}
+                      <WorkflowInput
+                        workflow={selectedWorkflow}
+                        onSubmit={(input) => run.mutate(input)}
                       >
-                        {Object.entries(schema?.properties ?? {}).map(
-                          ([name, field]) => (
-                            <label className="field" key={name}>
-                              <span>
-                                {name}
-                                {schema?.required?.includes(name) && <b> *</b>}
-                              </span>
-                              {field.type === "boolean" ? (
-                                <input
-                                  type="checkbox"
-                                  checked={!!values[name]}
-                                  onChange={(e) =>
-                                    setValues({
-                                      ...values,
-                                      [name]: e.target.checked,
-                                    })
-                                  }
-                                />
-                              ) : field.type === "string" ? (
-                                <textarea
-                                  placeholder="Örn. Ahşap saplı, mat mavi seramik kahve kupası"
-                                  value={String(values[name] ?? "")}
-                                  required={schema?.required?.includes(name)}
-                                  minLength={field.minLength}
-                                  maxLength={field.maxLength}
-                                  onChange={(e) =>
-                                    setValues({
-                                      ...values,
-                                      [name]: e.target.value,
-                                    })
-                                  }
-                                />
-                              ) : (
-                                <input
-                                  type="number"
-                                  step={field.type === "integer" ? 1 : "any"}
-                                  min={field.minimum}
-                                  max={field.maximum}
-                                  required={schema?.required?.includes(name)}
-                                  value={String(values[name] ?? "")}
-                                  onChange={(e) =>
-                                    setValues({
-                                      ...values,
-                                      [name]:
-                                        e.target.value === ""
-                                          ? undefined
-                                          : Number(e.target.value),
-                                    })
-                                  }
-                                />
-                              )}
-                            </label>
-                          ),
+                        {(values) => (
+                          <>
+                            <ErrorBox error={run.error} />
+                            <QuotePanel
+                              workflowID={selected}
+                              revision={selectedWorkflow.revision}
+                              input={values}
+                            />
+                            <button
+                              className="button primary full"
+                              disabled={run.isPending}
+                            >
+                              {run.isPending
+                                ? "Başlatılıyor…"
+                                : "Üretimi başlat"}{" "}
+                              <span>→</span>
+                            </button>
+                            <small className="hint">
+                              Model ve workflow snapshot’ı her run için
+                              saklanır.
+                            </small>
+                          </>
                         )}
-                        <ErrorBox error={run.error} />
-                        <QuotePanel
-                          workflowID={selected}
-                          revision={selectedWorkflow.revision}
-                          input={values}
-                        />
-                        <button
-                          className="button primary full"
-                          disabled={run.isPending}
-                        >
-                          {run.isPending ? "Başlatılıyor…" : "Üretimi başlat"}{" "}
-                          <span>→</span>
-                        </button>
-                        <small className="hint">
-                          Model ve workflow snapshot’ı her run için saklanır.
-                        </small>
-                      </form>
+                      </WorkflowInput>
                     </>
                   ) : (
                     <div className="empty">
@@ -584,7 +525,12 @@ function App() {
               {detail.isLoading && runID && (
                 <div className="panel empty">Run detayı yükleniyor…</div>
               )}
-              {detail.data && <RunDetail run={detail.data} />}
+              {detail.data && (
+                <RunDetail
+                  run={detail.data}
+                  billingEnabled={capabilities.data?.billing_enabled === true}
+                />
+              )}
             </>
           )}
         </section>
@@ -596,7 +542,13 @@ function App() {
     </div>
   );
 }
-function RunDetail({ run }: { run: Run }) {
+function RunDetail({
+  run,
+  billingEnabled,
+}: {
+  run: Run;
+  billingEnabled: boolean;
+}) {
   const qc = useQueryClient();
   const refresh = useMutation({
     mutationFn: () =>
@@ -658,17 +610,25 @@ function RunDetail({ run }: { run: Run }) {
           Mevcut ücret kayıtları: <Money value={run.cost.reported_cost_usd} />{" "}
           (eksik olabilir)
         </span>
-        {!active(run.status) && run.cost.actual_cost_status !== "complete" && (
-          <button
-            className="button ghost"
-            disabled={refresh.isPending}
-            onClick={() => refresh.mutate()}
-          >
-            {refresh.isPending ? "İsteniyor…" : "Maliyet kaydını yenile"}
-          </button>
-        )}
+        {billingEnabled &&
+          !active(run.status) &&
+          run.cost.actual_cost_status !== "complete" && (
+            <button
+              className="button ghost"
+              disabled={refresh.isPending}
+              onClick={() => refresh.mutate()}
+            >
+              {refresh.isPending ? "İsteniyor…" : "Maliyet kaydını yenile"}
+            </button>
+          )}
       </div>
       <ErrorBox error={refresh.error} />
+      {!billingEnabled && run.cost.actual_cost_status !== "complete" && (
+        <p className="hint">
+          Bu ortamda faturalama sorguları kapalı. Sağlayıcının bildirmediği
+          gerçek ücretler doğrulanmış sayılmaz.
+        </p>
+      )}
       {run.nodes.some((n) => n.node.modelRef) && <RunCosts run={run} />}
       {run.error && (
         <div className="notice error">
@@ -749,7 +709,12 @@ function RunDetail({ run }: { run: Run }) {
                 </div>
               ))}
               <h3>Girdi / çıktı</h3>
-              <pre>{format({ input: n.input, output: n.output })}</pre>
+              <pre>
+                {format({
+                  input: n.node.kind === "input" ? run.input : n.input,
+                  output: n.output,
+                })}
+              </pre>
               {n.error && <pre className="danger">{format(n.error)}</pre>}
             </div>
           </details>

@@ -142,6 +142,9 @@ func TestSuccessfulRun(t *testing.T) {
 	if s.artifacts[0].ActualModelID != "fal-ai/flux/schnell" {
 		t.Fatal(s.artifacts)
 	}
+	if string(domain.JSON(s.run.Nodes[0].Input)) != string(domain.JSON(s.run.Input)) {
+		t.Fatal("Input node trace did not preserve the submitted input")
+	}
 }
 func TestTransientRetryThenSuccess(t *testing.T) {
 	e, s, p, now := setup(t)

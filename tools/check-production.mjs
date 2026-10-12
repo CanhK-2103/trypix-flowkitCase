@@ -20,7 +20,7 @@ const temporary = await mkdtemp(path.join(os.tmpdir(), `${project}-`));
 const env = { ...process.env, OPENROUTER_API_KEY: "", FAL_KEY: "", FAL_BILLING_KEY: "",
   POSTGRES_PASSWORD: randomBytes(32).toString("hex"), FLOWKIT_DOMAIN: "flowkit.localhost",
   DASHBOARD_SESSION_KEY: randomBytes(32).toString("hex"), EDGE_BIND_ADDRESS: "127.0.0.1", LOAD_EXAMPLES: "true",
-  WORKER_CONCURRENCY: "1", LOG_LEVEL: "info", COMPOSE_PROFILES: "" };
+  WORKER_CONCURRENCY: "1", LOG_LEVEL: "info", COMPOSE_PROFILES: "", BILLING_DISABLED: "true" };
 const argumentsBase = ["compose", "-p", project, "-f", "compose.yaml", "-f", "compose.production.yaml"];
 let ca;
 let runID = null;
@@ -149,6 +149,7 @@ try {
   assert.equal((await request(asset[1])).status, 200);
   assert.equal((await request("/models")).data.items.length, 3);
   assert.equal((await request("/workflows")).data.items.length, 2);
+  assert.equal((await request("/capabilities")).data.billing_enabled, false);
   const fixture = { name: "Production providerless smoke", definition: { schemaVersion: 1,
     nodes: [{ id: "input", kind: "input", params: { textField: "message", inputSchema: {
       type: "object", properties: { message: { type: "string", minLength: 1 } },
@@ -179,6 +180,17 @@ try {
   assert.equal(replay.status, 200);
   assert.equal(replay.data.run_id, runID);
   assert.equal((await request(`/workflows/${created.data.id}`, { method: "DELETE" })).status, 204);
+  assert.equal((await request(`/runs/${runID}/costs/refresh`, { method: "POST" })).data.error.code, "BILLING_DISABLED");
+  await compose("restart", "db", "dashboard");
+  let databaseReady = false;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    if ((await request("/health/ready")).status === 200) { databaseReady = true; break; }
+    await pause(300);
+  }
+  assert(databaseReady, "PostgreSQL must survive its forwarded stop signal");
+  assert.equal((await request(`/runs/${runID}`)).data.status, "succeeded");
+  const queryFailed = await compose("exec", "-T", "db", "psql", "-U", "flowkit", "-d", "flowkit", "-c", "SELECT flowkit_log_probe_missing;").then(() => false, () => true);
+  assert(queryFailed, "Native database error probe must fail");
   await compose("restart", "gate", "proxy");
   for (let attempt = 0; ; attempt++) {
     try { assert.equal((await request("/health/ready")).status, 200); break; }
@@ -208,8 +220,19 @@ try {
     const entry = JSON.parse(line);
     for (const key of ["run_id", "node_id", "attempt"]) assert.equal(entry[key], null);
   }
+  const infrastructureLogCounts = {};
+  for (const service of ["db", "dashboard", "api", "worker", "init", "bootstrap"]) {
+    const lines = (await compose("logs", "--no-color", "--no-log-prefix", service)).split(/\r?\n/).filter(Boolean);
+    assert(lines.length > 0, `${service} must produce verifiable logs`);
+    for (const line of lines) {
+      const entry = JSON.parse(line);
+      for (const key of ["run_id", "node_id", "attempt"]) assert(Object.hasOwn(entry, key), `${service} missing ${key}`);
+    }
+    infrastructureLogCounts[service] = lines.length;
+    if (service === "db") assert(lines.some((line) => JSON.parse(line).level === "ERROR"), "Native PostgreSQL errors must be JSON at ERROR level");
+  }
   log("INFO", "production.checked", { tls: "verified-local-ca", authentication: "password-only-signed-session-all-routes",
-    worker: "opt-in", restart: "passed", provider_calls: 0, access_log_lines: accessLogs.length });
+    worker: "opt-in", restart: "passed", provider_calls: 0, access_log_lines: accessLogs.length, infrastructure_log_lines: infrastructureLogCounts });
 } catch (error) {
   // Child-process errors can include arguments/environment; only expose a sanitized message.
   const sanitize = (text) => text.replaceAll(password, "[redacted]").replaceAll(sessionCookie || "unused-placeholder", "[redacted]").replaceAll(env.DASHBOARD_SESSION_KEY, "[redacted]").replaceAll(env.DASHBOARD_PASSWORD_HASH || "unused-hash", "[redacted]");

@@ -84,6 +84,9 @@ func Reconcile(ctx context.Context, s *storage.Store, e *engine.Engine, log *slo
 // Due checks are persisted in each request. Multiple workers may read the same
 // accounting record, but optimistic checkpoints prevent overwriting newer data.
 func ReconcileBilling(ctx context.Context, s *storage.Store, e *engine.Engine) error {
+	if e.Config.BillingDisabled {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	rows, err := s.Q.ListBillingDue(ctx, 25)

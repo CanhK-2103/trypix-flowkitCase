@@ -22,6 +22,20 @@ func (p *billingFake) Billed(_ context.Context, q domain.ProviderRequest) (provi
 	}
 	return providers.BilledCost{Found: p.available, Amount: "0.0027", Source: "mock billed", Raw: domain.JSON(domain.Object{"request_id": q.ProviderRequestID, "cost_total": "0.0027"})}, p.failure
 }
+func TestDisabledBillingPreservesCompletedGenerationWithoutQueries(t *testing.T) {
+	e, s, p, now := setup(t)
+	drive(t, e, s, now)
+	b := &billingFake{fake: p, available: true}
+	e.Provider = b
+	e.Config.BillingDisabled = true
+	before := string(domain.JSON(s.run))
+	if err := e.ReconcileCosts(context.Background(), s.run.ID); err != nil {
+		t.Fatal(err)
+	}
+	if b.checks != 0 || string(domain.JSON(s.run)) != before || s.run.Status != "succeeded" {
+		t.Fatal("Disabled accounting changed run or contacted provider")
+	}
+}
 func TestDelayedActualTotalResumeAndNoDoubleCharge(t *testing.T) {
 	e, s, p, now := setup(t)
 	drive(t, e, s, now)

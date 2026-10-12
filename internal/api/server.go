@@ -42,6 +42,9 @@ func requestID(r *http.Request) string { v, _ := r.Context().Value(requestKey{})
 func (s *Server) Handler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(s.middleware)
+	r.Get("/capabilities", func(w http.ResponseWriter, r *http.Request) {
+		send(w, 200, domain.Object{"billing_enabled": !s.Config.BillingDisabled})
+	})
 	r.Get("/health/live", func(w http.ResponseWriter, r *http.Request) { send(w, 200, domain.Object{"status": "ok"}) })
 	r.Get("/health/ready", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
@@ -274,6 +277,11 @@ func workflowBody(w http.ResponseWriter, r *http.Request) (domain.Workflow, []do
 }
 func validateMetadata(wf domain.Workflow) []domain.Finding {
 	out := []domain.Finding{}
+	if wf.ID != "" {
+		if _, err := uuid.Parse(wf.ID); err != nil {
+			out = append(out, domain.Finding{Code: "INVALID_WORKFLOW_ID", Message: "ID must be UUID", Path: "/id"})
+		}
+	}
 	if strings.TrimSpace(wf.Name) == "" || len(wf.Name) > 200 {
 		out = append(out, domain.Finding{Code: "INVALID_STRUCTURE", Message: "Name must contain 1–200 bytes", Path: "/name"})
 	}
@@ -315,16 +323,15 @@ func (s *Server) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	if wf.ID == "" {
 		wf.ID = uuid.NewString()
 	}
-	if _, e := uuid.Parse(wf.ID); e != nil {
-		s.fail(w, r, 422, "VALIDATION_FAILED", "ID must be UUID", nil)
-		return
-	}
-	if _, e = s.Store.Q.GetWorkflow(r.Context(), storage.UUID(wf.ID)); e == nil {
-		s.fail(w, r, 409, "ALREADY_EXISTS", "Workflow ID already exists, including deleted IDs", nil)
-		return
-	} else if !errors.Is(e, pgx.ErrNoRows) {
-		s.dbError(w, r, e)
-		return
+	// Only look up parseable IDs. Invalid metadata is collected with graph findings.
+	if _, idError := uuid.Parse(wf.ID); idError == nil {
+		if _, e = s.Store.Q.GetWorkflow(r.Context(), storage.UUID(wf.ID)); e == nil {
+			s.fail(w, r, 409, "ALREADY_EXISTS", "Workflow ID already exists, including deleted IDs", nil)
+			return
+		} else if !errors.Is(e, pgx.ErrNoRows) {
+			s.dbError(w, r, e)
+			return
+		}
 	}
 	tx, e := s.Store.Pool.Begin(r.Context())
 	if e != nil {
@@ -390,10 +397,6 @@ func (s *Server) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := chi.URLParam(r, "id")
-	if wf.ID != "" && wf.ID != id {
-		s.fail(w, r, 422, "VALIDATION_FAILED", "Body ID differs from path ID", nil)
-		return
-	}
 	tx, e := s.Store.Pool.Begin(r.Context())
 	if e != nil {
 		s.dbError(w, r, e)
@@ -416,6 +419,9 @@ func (s *Server) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 	if e != nil {
 		s.dbError(w, r, e)
 		return
+	}
+	if wf.ID != "" && wf.ID != id {
+		f = append(f, domain.Finding{Code: "WORKFLOW_ID_MISMATCH", Message: "Body ID differs from path ID", Path: "/id"})
 	}
 	if len(f) > 0 {
 		s.fail(w, r, 422, "VALIDATION_FAILED", "Invalid workflow", f)

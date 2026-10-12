@@ -75,6 +75,7 @@ TanStack Query aktif run detayını 2 saniyede bir yeniler; üretim bittikten so
 | POST | `/runs/{id}/costs/refresh` | Bitmiş run'ın eksik ücret kayıtlarını yeniden sorgulamayı planla |
 | GET | `/artifacts/{id}` | Kalıcı görsel |
 | GET | `/health/live`, `/health/ready` | Canlılık / DB ve migration hazırlığı |
+| GET | `/capabilities` | Ortamda sağlayıcı faturalama sorgularının açık olup olmadığı |
 
 Listeleme `limit` (varsayılan 25, max 100) ve `cursor` kullanır; yanıt `{items, next_cursor}`. OpenAPI: [docs/openapi.json](docs/openapi.json). Workflow/katalog camelCase; run/log/hata metadata snake_case.
 
@@ -96,6 +97,8 @@ PowerShell'de `curl.exe` kullanın. Hata: `{error:{code,message,request_id,findi
 
 `schemaVersion:1`, node `id/kind/modelRef/params/promptTemplate`, edge `from/fromPort/to/toPort`. Bir input, bir output ve bağlı tek zincir; cycle, fan-out, fan-in, eksik/uyumsuz port, duplicate ID, unknown/disabled model ve çözülemeyen şablon değişkenleri reddedilir. Findings `code/message/path` ve gerektiğinde node_id taşır.
 
+Workflow ID verilirse UUID olmalıdır; standalone validate, create ve update ortak metadata/graf bulgularını döndürür. Update body/path ID uyuşmazlığı diğer bulguları gizlemez. Dashboard girdi formu seçilen workflow'un şemasından üretilir; farklı alan isimleri, boolean/numeric değerleri ve enum seçenekleri desteklenir. Workflow/revision/şema değişiminde önceki alanlar gönderilmez.
+
 Portlar: input `text`; llm giriş `text` veya `prompt`, çıkış `prompt`; image giriş `prompt`, çıkış `image`; output bu üç tipten birini kabul eder. Input schema düz string/number/integer/boolean alanları tanımlar. Şablonlar `{{input.description}}` ve `{{nodes.prompt_writer.prompt}}`; yalnızca önceki node'ların scalar çıktılarını kullanır. Kod/fonksiyon değerlendirme yoktur. Image template yoksa bağlı prompt doğrudan kullanılır.
 
 ## Hata, retry ve bonuslar
@@ -108,6 +111,8 @@ Portlar: input `text`; llm giriş `text` veya `prompt`, çıkış `prompt`; imag
 - **Maliyet:** request ledger ve fiyat snapshot'ı; NUMERIC(24,12) / decimal string. Başlangıç tahmini, çalıştırma tahmini ve gerçek ücret ayrı tutulur. Polling/restart ikinci maliyet üretmez; yeni üretim retry'si ayrı kayıt olur. Ayrıntılar aşağıda.
 
 ## Başlangıç tahmini ve gerçek maliyet
+
+Billing okuma yetkisi olmayan ortamda `BILLING_DISABLED=true` kullanılır. Worker otomatik ücret sorgusu yapmaz; maliyet yenileme endpoint'i `409/BILLING_DISABLED` döndürür, dashboard yenileme butonunu göstermez. Üretim, katalog tahmini ve OpenRouter'ın completion yanıtında bildirdiği gerçek ücret çalışır. Bilinmeyen fal/gerçek toplam null kalır; bu ayar üretim sağlayıcısının pricing sorgusunu veya normal queue polling'ini kapatmaz.
 
 Dashboard girdi formunda, başlatmadan önce node'ların fiyatları ve **başlangıç tahmini toplam** görünür. `/estimate` ücretli üretim veya sağlayıcı fiyat çağrısı yapmaz: katalog fiyatı, seçilen görsel boyutu ve LLM için yaklaşık 4 karakter/token + 16 mesaj tokenı ile `max_completion_tokens` çıktı rezervi kullanır. Bu kesin bir üst sınır değildir; retry ve önbellek indirimleri tahmine dahil değildir. Eksik girdi/fiyat `null/partial` döner. Run kabul edilirken o anki snapshot'tan tekrar hesaplanan `initial_estimate` kalıcıdır; sonradan fiyat veya workflow değişince eski tahmin değişmez.
 
@@ -189,7 +194,7 @@ CI ayrıca temiz Docker Compose kurulumu, örnek yükleme, gateway statik dosyas
 
 `node tools/check-production.mjs` ayrı ve geçici bir Compose projesinde production override'ını kontrol eder: DB/API/dashboard/gate için kapalı host portları, varsayılan kapalı worker, HTTP → HTTPS yönlendirmesi, doğrulanan yerel CA, tek şifreli form, yetkisiz API/asset 401, yetkili dashboard/API erişimi, CSRF reddi, logout, sağlayıcısız asenkron run/idempotency, gate/proxy restart ve JSON log bağlamı. Sağlayıcı anahtarlarını boşaltır; yalnız kendi test volume'larını temizler. Gate unit testleri şifre/anahtar değişiminde eski oturum reddini, token tahrifini, expiry ve rate limit'i de kapsar. Bu kontrol canlı domain sertifikasının doğrulanmasının yerine geçmez.
 
-API/worker/init/bootstrap/River uygulama logları JSONL: run_id, node_id, attempt (bağlam yoksa null), event, request/model/provider kimlikleri, süre, retry ve hata. DEBUG demo varsayılanıdır; `LOG_LEVEL` ile değişir. Provider hataları ERROR. Tam input/prompt/output DB izinde; credential/header/base64 loglanmaz. Nginx access log JSON; PostgreSQL motor ve Nginx native error logları altyapı loglarıdır. Docker log rotation 10 MB × 3.
+API/worker/init/bootstrap/River ve bütün deployment container logları JSONL: run_id, node_id, attempt (bağlam yoksa null), event, request/model/provider kimlikleri, süre, retry ve hata. DEBUG demo varsayılanıdır; `LOG_LEVEL` ile değişir. Provider hataları ERROR. Tam input/prompt/output DB izinde; credential/header/base64 loglanmaz. PostgreSQL motor, Nginx startup/native error/access ve Caddy native logları da JSON sözleşmesine uyar. `cmd/logwrap` resmî DB/Nginx entrypoint'lerini çalıştırır, stdout/stderr satırlarını normalize eder, credential değerlerini maskeler ve PostgreSQL SIGINT/Nginx SIGQUIT dahil stop sinyalini child'a iletir. DB/dashboard Docker target'ları ana Dockerfile'dadır. Docker log rotation 10 MB × 3.
 
 ## Model seçimi, bütçe ve AI kullanımı
 

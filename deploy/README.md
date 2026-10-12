@@ -33,6 +33,10 @@ Hash'i `.env` içinde tek tırnakla saklayın: `DASHBOARD_PASSWORD_HASH='$2a$...
 
 ## Güvenli ilk başlangıç
 
+DB ve dashboard image'ları ana Dockerfile'ın `database`/`dashboard` target'larından build edilir. Resmî entrypoint'leri `cmd/logwrap` çalıştırır; PostgreSQL motor ve Nginx startup/native error/access çıktıları dahil her satır JSON ve ortak null run/node/attempt bağlamı taşır. Stop sinyali child'a iletilir, mevcut PostgreSQL/artifact volume'ları korunur.
+
+Faturalama okuma yetkisi olmayan kurulumda `.env` içine `BILLING_DISABLED=true` yazılır. API `/capabilities` ile bu durumu bildirir; otomatik billing ve refresh planlama kapalıdır. Üretim/quote/OpenRouter usage maliyetleri korunur; bilinmeyen fal gerçek tutarı uydurulmaz.
+
 ```sh
 docker compose -p flowkit -f compose.yaml -f compose.production.yaml up -d --build --wait
 docker compose -p flowkit -f compose.yaml -f compose.production.yaml ps
@@ -94,4 +98,4 @@ Sunucu SSH ön kontrolü Ubuntu 24.04/x86_64, 1 CPU, yaklaşık 4 GB RAM ve 50 G
 
 İlk public kontrol Basic Auth ile HTTP 308, yetkisiz 401/yetkili 200 ve güvenilir TLS'i doğruladı. Kullanıcının sonraki isteğiyle tek şifreli giriş ve ayrı site şifresi eklendi; 268d72d build/startup exit 0, gate/API healthy. [Bu sürümün CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38167811202) bütün job'ları geçti. Güncel [anahtarsız deployment kanıtı](../docs/evidence/deployment.json) password-only form 200, root login 303, yetkisiz API/asset ve yanlış şifre 401, doğru şifreyle 200, CSRF 403 ve logout/sonrası 401 sonuçlarını gösterir. Üç model ve iki workflow hazır. Kanıt parola/hash/session cookie içermez; [boş login ekranı](../docs/flowkit-login.jpg) yayından alındı. Worker kapalı/provider anahtarları boş olduğu için cloud üretim aktif değildir; yerel gerçek run/medya cloud'a taşınmamıştır. Değerlendiriciye URL ile yalnız site şifresi ayrıca verilir; SSH erişim bilgisi verilmez.
 
-Son proxy log düzeltmesi 3bf8667 olarak VPS'e build/recreate edildi; exit 0. [Son kod CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38168698336) bütün job'ları geçti. Cloud'da 400 gate ve 28 proxy log satırında null bağlam ve credential sızıntısı olmaması doğrulandı; public şifre/oturum kontrolü yeniden başarılı. DB/medya volume'ları korunur, worker kapalıdır.
+11 Ekim'deki proxy log düzeltmesi 3bf8667 olarak VPS'e build/recreate edildi; [o sürümün CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38168698336) başarılıdır. Sonraki ef9bbdb düzeltmesi gerçek tarayıcı login formundaki Origin=null davranışını same-origin Referrer-Policy ile giderdi; strict origin koruması korundu. Bu düzeltmenin [CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38170131348) ve 71208e6 takip kaydının [CI'sı](https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38170369875) başarılıdır. Bunlar tarihsel kurulum kayıtlarıdır; sonraki tamamlamalar aşağıda kaydedilir.

@@ -218,6 +218,7 @@ const schemas = {
     ["run_id", "status", "failed_node_id", "error"],
   ),
   Health: object({ status: str }, ["status"]),
+  Capabilities: object({ billing_enabled: { type: "boolean" } }, ["billing_enabled"]),
 };
 for (const [name, item] of [
   ["Models", "Model"],
@@ -266,6 +267,7 @@ const operation = (summary, code, result, request, parameters = []) => ({
   },
 });
 const paths = {
+  "/capabilities": { get: operation("Environment accounting capability", 200, "Capabilities") },
   "/models": {
     get: operation("List models", 200, "Models", null, [
       ...page,

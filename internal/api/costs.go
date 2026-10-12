@@ -46,6 +46,10 @@ func (s *Server) estimateRun(w http.ResponseWriter, r *http.Request) {
 	send(w, 200, engine.QuoteWorkflow(wf, models, body.Input, time.Now().UTC()))
 }
 func (s *Server) refreshCosts(w http.ResponseWriter, r *http.Request) {
+	if s.Config.BillingDisabled {
+		s.fail(w, r, 409, "BILLING_DISABLED", "Provider accounting queries are disabled in this environment", nil)
+		return
+	}
 	if !validID(w, r, s) {
 		return
 	}

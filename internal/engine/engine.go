@@ -154,6 +154,8 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 		n.Input = domain.Object{}
 		if idx > 0 {
 			n.Input = r.Nodes[idx-1].Output
+		} else {
+			n.Input = r.Input
 		}
 		if n.Model != nil {
 			duration := e.Config.LLMDeadline
