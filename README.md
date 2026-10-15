@@ -155,6 +155,25 @@ Portlar: input `text`; llm giriş `text` veya `prompt`, çıkış `prompt`; imag
 
 ## Başlangıç tahmini ve gerçek maliyet
 
+Görsel node'larında isteğe bağlı **birincil → yedek model** sırası da desteklenir. Örneğin etkinlik afişinin görsel node'u şu alanlarla yapılandırılabilir:
+
+```json
+{
+  "id": "poster",
+  "kind": "image",
+  "modelRef": "flux-krea",
+  "fallbackModelRef": "flux-dev",
+  "params": {"image_size": {"width": 512, "height": 768}, "num_images": 1},
+  "promptTemplate": "{{nodes.art_director.prompt}}"
+}
+```
+
+`modelRef` birincil, `fallbackModelRef` yedek katalog alias'ıdır. İkisi de kayıtlı/aktif, farklı alias'lar ve aynı provider/image profile ile uyumlu olmalıdır; create/update/run kabulünde ikisi de doğrulanır ve snapshot alınır. Temiz kurulum örneği Dev ile çalışmaya devam eder; Krea gibi ek model önce katalog API'sine kaydedilir, ardından mevcut workflow yalnız API/JSON ile güncellenir.
+
+İlk **güvenli geçici üretim hatasında** sonraki deneme yedek modele geçer. İki model birlikte **en fazla 3 toplam node attempt** kullanır; 2/4 saniye+jitter/Retry-After ve mevcut node deadline korunur. Kalıcı input/auth/payment/model/content hatalarında veya belirsiz submission'da geçiş yapılmaz. Bilinen, sürmekte olan fal ID'sinin status/result hatası aynı ticket'la tekrar edilir; yalnız kesin terminal üretim hatası geçici sınıftaysa yeni model üretimine geçilebilir. Sağlayıcının gizli retry/fallback header'ları kapalı kalır; bu geçiş FlowKit'in açık workflow verisi ve log/iz kaydıdır.
+
+Run'da immutable `model_snapshot` ve `fallback_model_snapshot`, seçimi gösteren `active_model_ref`, geçiş nedeni/zamanı `fallback` ve her provider request'in kendi model/ücret kaydı tutulur. Dashboard node detayında birincil/yedek ve geçiş nedeni görünür; görselin producer modeli gerçekten kullanılan request'ten gelir. Başlangıç tahmini birincil modelin tek üretim tahminidir; yedek geçişi/ek denemeler dahil değildir. İlk modelin bilinmeyen ücreti sıfırlanmaz; gerçek toplam bütün request ücretleri bilinince hesaplanır. [Motor/restart/üç deneme testleri](internal/engine/fallback_test.go), [validation](internal/workflow/fallback_test.go), [PostgreSQL/HTTP/worker testi](internal/integration/fallback_test.go).
+
 Billing okuma yetkisi olmayan ortamda `BILLING_DISABLED=true` kullanılır. Worker otomatik ücret sorgusu yapmaz; maliyet yenileme endpoint'i `409/BILLING_DISABLED` döndürür, dashboard yenileme butonunu göstermez. Üretim, katalog tahmini ve OpenRouter'ın completion yanıtında bildirdiği gerçek ücret çalışır. Bilinmeyen fal/gerçek toplam null kalır; bu ayar üretim sağlayıcısının pricing sorgusunu veya normal queue polling'ini kapatmaz.
 
 Dashboard girdi formunda, başlatmadan önce node'ların fiyatları ve **başlangıç tahmini toplam** görünür. `/estimate` ücretli üretim veya sağlayıcı fiyat çağrısı yapmaz: katalog fiyatı, seçilen görsel boyutu ve LLM için yaklaşık 4 karakter/token + 16 mesaj tokenı ile `max_completion_tokens` çıktı rezervi kullanır. Bu kesin bir üst sınır değildir; retry ve önbellek indirimleri tahmine dahil değildir. Eksik girdi/fiyat `null/partial` döner. Run kabul edilirken o anki snapshot'tan tekrar hesaplanan `initial_estimate` kalıcıdır; sonradan fiyat veya workflow değişince eski tahmin değişmez.

@@ -40,6 +40,11 @@ type fake struct {
 	completeFailures                                  []*domain.Failure
 	pollFailure                                       *domain.Failure
 	permanentImage                                    bool
+	submitFailures                                    []*domain.Failure
+	submittedModels                                   []string
+	submittedParams                                   []domain.Object
+	estimateFailure                                   *domain.Failure
+	terminalFailure                                   *domain.Failure
 }
 
 func (f *fake) Complete(_ context.Context, m domain.Model, _ string, _ domain.Object) (providers.Completion, *domain.Failure) {
@@ -51,15 +56,27 @@ func (f *fake) Complete(_ context.Context, m domain.Model, _ string, _ domain.Ob
 	}
 	return providers.Completion{ID: "completion-1", Model: m.ModelID, Prompt: "A clean product photo", Raw: json.RawMessage(`{"id":"completion-1"}`), Usage: domain.Object{"prompt_tokens": json.Number("100"), "completion_tokens": json.Number("30"), "cost": json.Number("0.000025")}}, nil
 }
-func (f *fake) Submit(_ context.Context, _ domain.Model, _ string, _ domain.Object) (providers.Ticket, *domain.Failure) {
+func (f *fake) Submit(_ context.Context, m domain.Model, _ string, params domain.Object) (providers.Ticket, *domain.Failure) {
 	f.submitCount++
+	f.submittedModels = append(f.submittedModels, m.ModelID)
+	f.submittedParams = append(f.submittedParams, params)
+	if len(f.submitFailures) > 0 {
+		failure := f.submitFailures[0]
+		f.submitFailures = f.submitFailures[1:]
+		return providers.Ticket{}, failure
+	}
 	if f.permanentImage {
 		return providers.Ticket{}, &domain.Failure{Code: "INVALID_INPUT", HTTPStatus: 422, ProviderCode: "validation_error", Message: "Invalid image input"}
 	}
-	return providers.Ticket{ID: "fal-1", StatusURL: "http://mock/status", ResponseURL: "http://mock/result"}, nil
+	return providers.Ticket{ID: fmt.Sprintf("fal-%d", f.submitCount), StatusURL: "http://mock/status", ResponseURL: "http://mock/result"}, nil
 }
 func (f *fake) Status(_ context.Context, _ providers.Ticket) (providers.QueueState, *domain.Failure) {
 	f.pollCount++
+	if f.terminalFailure != nil {
+		failure := f.terminalFailure
+		f.terminalFailure = nil
+		return providers.QueueState{Status: "COMPLETED", Error: failure}, nil
+	}
 	if f.pollFailure != nil {
 		e := f.pollFailure
 		f.pollFailure = nil
@@ -73,11 +90,17 @@ func (f *fake) Status(_ context.Context, _ providers.Ticket) (providers.QueueSta
 func (f *fake) Result(_ context.Context, _ providers.Ticket) (providers.ImageResult, *domain.Failure) {
 	return providers.ImageResult{URL: "http://mock/image", Width: 512, Height: 512, Raw: json.RawMessage(`{"images":[{"url":"http://mock/image","width":512,"height":512}]}`)}, nil
 }
-func (f *fake) Estimate(_ context.Context, _ domain.Model) (string, *domain.Failure) {
+func (f *fake) Estimate(_ context.Context, m domain.Model) (string, *domain.Failure) {
 	f.priceCount++
 	n := f.store.run.Nodes[2]
-	if len(n.Requests) == 0 || n.Requests[0].ProviderRequestID == "" {
+	if len(n.Requests) == 0 || n.Requests[len(n.Requests)-1].ProviderRequestID == "" {
 		panic("price called before durable ticket")
+	}
+	if f.estimateFailure != nil {
+		return "", f.estimateFailure
+	}
+	if m.Pricing != nil {
+		return m.Pricing.UnitPrice, nil
 	}
 	return "0.003", nil
 }

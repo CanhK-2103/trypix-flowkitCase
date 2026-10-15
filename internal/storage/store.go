@@ -130,30 +130,32 @@ func (s *Store) Artifact(ctx context.Context, id string) (domain.Artifact, error
 func (s *Store) ModelMap(ctx context.Context, q *dbgen.Queries, definition domain.Definition, lock bool) (map[string]domain.Model, error) {
 	models := map[string]domain.Model{}
 	for _, n := range definition.Nodes {
-		if n.ModelRef == "" {
-			continue
+		for _, ref := range []string{n.ModelRef, n.FallbackModelRef} {
+			if ref == "" {
+				continue
+			}
+			if _, ok := models[ref]; ok {
+				continue
+			}
+			var data json.RawMessage
+			var e error
+			if lock {
+				data, e = q.LockModel(ctx, ref)
+			} else {
+				data, e = q.GetModel(ctx, ref)
+			}
+			if errors.Is(e, pgx.ErrNoRows) {
+				continue
+			}
+			if e != nil {
+				return nil, e
+			}
+			var m domain.Model
+			if e := domain.Decode(data, &m); e != nil {
+				return nil, e
+			}
+			models[m.Alias] = m
 		}
-		if _, ok := models[n.ModelRef]; ok {
-			continue
-		}
-		var data json.RawMessage
-		var e error
-		if lock {
-			data, e = q.LockModel(ctx, n.ModelRef)
-		} else {
-			data, e = q.GetModel(ctx, n.ModelRef)
-		}
-		if errors.Is(e, pgx.ErrNoRows) {
-			continue
-		}
-		if e != nil {
-			return nil, e
-		}
-		var m domain.Model
-		if e := domain.Decode(data, &m); e != nil {
-			return nil, e
-		}
-		models[m.Alias] = m
 	}
 	return models, nil
 }

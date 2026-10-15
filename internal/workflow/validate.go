@@ -216,6 +216,7 @@ func Validate(d domain.Definition, models map[string]domain.Model) []domain.Find
 	fields := map[string]bool{}
 	for i, n := range d.Nodes {
 		path := fmt.Sprintf("/definition/nodes/%d", i)
+		out = append(out, validateFallback(n, i, models)...)
 		if !identifier.MatchString(n.ID) {
 			add("INVALID_STRUCTURE", "Node ID must be a valid identifier", path+"/id", n.ID)
 		}

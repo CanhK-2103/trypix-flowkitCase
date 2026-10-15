@@ -49,11 +49,12 @@ type Model struct {
 	Pricing      *Pricing `json:"pricing,omitempty"`
 }
 type Node struct {
-	ID             string `json:"id"`
-	Kind           string `json:"kind"`
-	ModelRef       string `json:"modelRef,omitempty"`
-	Params         Object `json:"params,omitempty"`
-	PromptTemplate string `json:"promptTemplate,omitempty"`
+	ID               string `json:"id"`
+	Kind             string `json:"kind"`
+	ModelRef         string `json:"modelRef,omitempty"`
+	FallbackModelRef string `json:"fallbackModelRef,omitempty"`
+	Params           Object `json:"params,omitempty"`
+	PromptTemplate   string `json:"promptTemplate,omitempty"`
 }
 type Edge struct {
 	From     string `json:"from"`
@@ -125,6 +126,7 @@ type Billing struct {
 }
 type ProviderRequest struct {
 	ID                string          `json:"id"`
+	ModelRef          string          `json:"model_ref,omitempty"`
 	ProviderRequestID string          `json:"provider_request_id,omitempty"`
 	Provider          string          `json:"provider"`
 	RequestedModelID  string          `json:"requested_model_id"`
@@ -163,6 +165,9 @@ type ApprovalPause struct {
 type NodeRun struct {
 	Node           Node              `json:"node"`
 	Model          *Model            `json:"model_snapshot,omitempty"`
+	FallbackModel  *Model            `json:"fallback_model_snapshot,omitempty"`
+	ActiveModelRef string            `json:"active_model_ref,omitempty"`
+	Fallback       *ModelFallback    `json:"fallback,omitempty"`
 	Status         string            `json:"status"`
 	Input          Object            `json:"input,omitempty"`
 	Output         Object            `json:"output,omitempty"`
@@ -177,6 +182,13 @@ type NodeRun struct {
 	Requests       []ProviderRequest `json:"provider_requests"`
 	Error          *Failure          `json:"error,omitempty"`
 	Cost           Cost              `json:"cost"`
+}
+
+type ModelFallback struct {
+	From       string    `json:"from"`
+	To         string    `json:"to"`
+	Reason     *Failure  `json:"reason"`
+	SwitchedAt time.Time `json:"switched_at"`
 }
 type Run struct {
 	ID              string     `json:"run_id"`

@@ -290,6 +290,8 @@ Kayıtlı fal request için status/result hatalarında aynı request_id kullanı
 
 fal isteklerinde sağlayıcının iç otomatik retry'si `X-Fal-No-Retry: 1` ile kapatılır. Eşdeğer başka modele fallback `x-app-fal-disable-fallback: true` ile kapatılır. OpenRouter'a alternatif model listesi verilmez. Böylece FlowKit deneme politikası ve model provenance bilgisi korunur.
 
+15 Ekim 2026 kullanıcı ek isteği: image node için açık `fallbackModelRef` yedek alias'ı desteklenir. Provider içi gizli fallback kapalı kalır; FlowKit birincil/yedek snapshot ve seçimi kalıcı tutar. İlk güvenli geçici üretim hatası kalan node attempt bütçesini yedekte kullanır; toplam 3, deadline ve artan bekleme korunur. Kalıcı/uncertain hata veya devam eden bilinen ticket'ın poll/result hatasında başka üretim başlatılmaz. Bu motor kabiliyetinin ilk eklenmesi kod/deploy gerektirir; sonrasında uyumlu primary/secondary alias seçimi API verisidir.
+
 ### 9.1. Son sağlayıcı sözleşmesi kontrolleri
 
 OpenRouter online isteklerinde max_completion_tokens kullanılır; deprecated max_tokens ve usage.include gönderilmez. Yanıtta usage otomatik alınır. usage.cost müşteriye bildirilen tutardır; upstream_inference_cost buna eklenmez. HTTP 200 içindeki refusal/content_filter, boş metin veya length ile kesilmiş çıktı başarılı prompt sayılmaz. 524 timeout, 529 overload geçici olarak sınıflanır; gönderim belirsizliği ve faz güvenliği yine kontrol edilir.

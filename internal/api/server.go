@@ -581,6 +581,9 @@ func (s *Server) startRun(w http.ResponseWriter, r *http.Request) {
 			nr.Model = &model
 			nr.Cost = quote.Nodes[i].Cost
 		}
+		if fallback, ok := models[node.FallbackModelRef]; ok {
+			nr.FallbackModel = &fallback
+		}
 		run.Nodes = append(run.Nodes, nr)
 	}
 	job, e := s.Queue.InsertTx(r.Context(), tx, jobs.RunArgs{RunID: run.ID}, nil)

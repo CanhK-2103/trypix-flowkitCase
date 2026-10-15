@@ -32,6 +32,9 @@ func QuoteWorkflow(w domain.Workflow, models map[string]domain.Model, input doma
 			part.Cost = domain.Cost{Status: "partial", ActualStatus: "pending"}
 			if ok {
 				part.ModelID = m.ModelID
+				if n.FallbackModelRef != "" {
+					part.Assumptions = append(part.Assumptions, "Başlangıç tahmini birincil model içindir; yedek model geçişi ve ek denemeler dahil değildir. Yedek: "+n.FallbackModelRef)
+				}
 				params := workflow.Merge(m.Defaults, n.Params)
 				if n.Kind == "image" {
 					width, height := imageDimensions(params["image_size"])

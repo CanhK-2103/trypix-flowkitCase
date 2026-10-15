@@ -20,6 +20,7 @@ import {
 import type { Run, Workflow } from "./types";
 import { Money, ActualMoney, QuotePanel, RunCosts } from "./Costs";
 import { WorkflowInput } from "./WorkflowInput";
+import { ModelRoute } from "./ModelRoute";
 import "./style.css";
 const JsonEditor = lazy(() =>
   import("./JsonEditor").then((module) => ({ default: module.JsonEditor })),
@@ -662,6 +663,7 @@ function RunDetail({
               <span>⌄</span>
             </summary>
             <div className="trace-body">
+              <ModelRoute node={n} />
               <div className="trace-meta">
                 <span>
                   Tahmini: <Money value={n.cost.estimated_cost_usd} />
@@ -689,7 +691,7 @@ function RunDetail({
               ))}
               {n.provider_requests.map((p) => (
                 <div
-                  key={p.provider_request_id ?? p.requested_model_id}
+                  key={p.id ?? p.provider_request_id ?? p.requested_model_id}
                   className="request-row"
                 >
                   <code>{p.provider_request_id ?? "Request ID yok"}</code>

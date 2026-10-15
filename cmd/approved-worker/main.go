@@ -58,10 +58,11 @@ func nextOperation(r *domain.Run, cfg config.Config) operation {
 		if n.Status == "succeeded" {
 			continue
 		}
-		if n.Model == nil {
+		model := engine.ActiveModel(&n)
+		if model == nil {
 			return o
 		}
-		o.NodeID, o.Provider, o.Model = n.Node.ID, n.Model.Provider, n.Model.ModelID
+		o.NodeID, o.Provider, o.Model = n.Node.ID, model.Provider, model.ModelID
 		o.Attempt = len(n.Attempts)
 		var q *domain.ProviderRequest
 		if len(n.Requests) > 0 {
@@ -73,7 +74,7 @@ func nextOperation(r *domain.Run, cfg config.Config) operation {
 			if n.Node.Kind == "llm" {
 				o.Action, o.URL = "completion", cfg.OpenRouterURL+"/chat/completions"
 			} else {
-				o.Action, o.URL = "submit", strings.TrimRight(cfg.FalURL, "/")+"/"+n.Model.ModelID
+				o.Action, o.URL = "submit", strings.TrimRight(cfg.FalURL, "/")+"/"+model.ModelID
 			}
 			return o
 		}

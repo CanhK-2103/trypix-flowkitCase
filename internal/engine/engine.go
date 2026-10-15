@@ -73,8 +73,8 @@ func (e *Engine) event(r *domain.Run, n *domain.NodeRun, level slog.Level, event
 		return
 	}
 	base := []any{"event", event, "run_id", r.ID, "workflow_id", r.Workflow.ID, "request_id", r.RequestID, "job_id", r.JobID, "node_id", n.Node.ID, "node_kind", n.Node.Kind, "attempt", len(n.Attempts), "status", n.Status}
-	if n.Model != nil {
-		base = append(base, "provider", n.Model.Provider, "model_alias", n.Model.Alias, "requested_model_id", n.Model.ModelID)
+	if m := ActiveModel(n); m != nil {
+		base = append(base, "provider", m.Provider, "model_alias", m.Alias, "requested_model_id", m.ModelID, "active_model_ref", m.Alias)
 	}
 	if n.DeadlineAt != nil {
 		base = append(base, "deadline_at", n.DeadlineAt)
@@ -85,6 +85,10 @@ func (e *Engine) event(r *domain.Run, n *domain.NodeRun, level slog.Level, event
 	if len(n.Requests) > 0 {
 		q := n.Requests[len(n.Requests)-1]
 		base = append(base, "phase", q.Phase, "provider_request_id", q.ProviderRequestID, "actual_model_id", q.ActualModelID, "model_identity_source", q.IdentitySource)
+		base = append(base, "provider", q.Provider, "requested_model_id", q.RequestedModelID)
+		if q.ModelRef != "" {
+			base = append(base, "model_alias", q.ModelRef)
+		}
 	}
 	values := map[string]any{}
 	for i := 0; i+1 < len(base); i += 2 {
@@ -179,10 +183,11 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 		n.Output = n.Input
 		return e.finishNode(ctx, r, n)
 	}
-	if n.Model == nil {
+	model := ActiveModel(n)
+	if model == nil {
 		return 0, e.fail(ctx, r, idx, &domain.Failure{Code: "MODEL_NOT_REGISTERED", Message: "Run snapshot lacks required model"})
 	}
-	params := workflow.Merge(n.Model.Defaults, n.Node.Params)
+	params := workflow.Merge(model.Defaults, n.Node.Params)
 	if n.RenderedPrompt == "" {
 		if n.Node.PromptTemplate != "" {
 			prior := map[string]domain.Object{}
@@ -208,7 +213,7 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 		if len(n.Attempts) >= 3 {
 			return 0, e.fail(ctx, r, idx, &domain.Failure{Code: "RUN_INFRASTRUCTURE_ERROR", Message: "Attempt limit exhausted"})
 		}
-		request := domain.ProviderRequest{ID: uuid.NewString(), Provider: n.Model.Provider, RequestedModelID: n.Model.ModelID, Phase: "sending", CreatedAt: now, Pricing: n.Model.Pricing, Cost: domain.Cost{Status: "partial"}}
+		request := domain.ProviderRequest{ID: uuid.NewString(), ModelRef: model.Alias, Provider: model.Provider, RequestedModelID: model.ModelID, Phase: "sending", CreatedAt: now, Pricing: model.Pricing, Cost: domain.Cost{Status: "partial"}}
 		n.Requests = append(n.Requests, request)
 		q = &n.Requests[len(n.Requests)-1]
 		n.Attempts = append(n.Attempts, domain.Attempt{Number: len(n.Attempts) + 1, Phase: "sending", StartedAt: now, ProviderRequestRef: q.ID})
@@ -220,13 +225,13 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 		remoteCtx, cancel := context.WithDeadline(ctx, *n.DeadlineAt)
 		defer cancel()
 		if n.Node.Kind == "llm" {
-			response, f := e.Provider.Complete(remoteCtx, *n.Model, n.RenderedPrompt, params)
+			response, f := e.Provider.Complete(remoteCtx, *model, n.RenderedPrompt, params)
 			q.Raw = response.Raw
 			q.Usage = response.Usage
 			q.ProviderRequestID = response.ID
 			q.ActualModelID = response.Model
 			q.IdentitySource = "provider_response"
-			q.Cost = TokenCost(*n.Model, response.Usage)
+			q.Cost = TokenCost(*model, response.Usage)
 			if f != nil {
 				return e.providerFailure(ctx, r, idx, f, true)
 			}
@@ -238,12 +243,12 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 			e.event(r, n, slog.LevelInfo, "provider.result_committed", "provider_request_id", q.ProviderRequestID, "actual_model_id", q.ActualModelID)
 			return time.Millisecond, nil
 		}
-		ticket, f := e.Provider.Submit(remoteCtx, *n.Model, n.RenderedPrompt, params)
+		ticket, f := e.Provider.Submit(remoteCtx, *model, n.RenderedPrompt, params)
 		q.ProviderRequestID = ticket.ID
 		q.StatusURL = ticket.StatusURL
 		q.ResponseURL = ticket.ResponseURL
 		q.Raw = ticket.Raw
-		q.ActualModelID = n.Model.ModelID
+		q.ActualModelID = model.ModelID
 		q.IdentitySource = "endpoint"
 		if f != nil {
 			return e.providerFailure(ctx, r, idx, f, true)
@@ -273,7 +278,7 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 	switch q.Phase {
 	case "waiting_provider":
 		if q.Cost.Source == "" {
-			price, f := e.Provider.Estimate(remoteCtx, *n.Model)
+			price, f := e.Provider.Estimate(remoteCtx, *model)
 			if f == nil && Money(price) != nil {
 				q.Cost = domain.Cost{Estimated: Money(price), Status: "complete", Source: "fal historical_api_price; one call"}
 			} else {
@@ -316,7 +321,7 @@ func (e *Engine) Step(ctx context.Context, id string) (time.Duration, error) {
 		q.Phase = "result_saved"
 		n.Output = domain.Object{"source_url": result.URL, "width": result.Width, "height": result.Height}
 		if q.Cost.Estimated == nil {
-			q.Cost = CatalogImageCost(*n.Model, result.Width, result.Height)
+			q.Cost = CatalogImageCost(*model, result.Width, result.Height)
 		}
 		if err := e.save(ctx, r); err != nil {
 			return 0, err
@@ -409,8 +414,16 @@ func (e *Engine) providerFailure(ctx context.Context, r *domain.Run, idx int, f 
 	}
 	n.NextRetryAt = &next
 	n.Status = "retry_wait"
+	switched := canFallback(n, f, newGeneration)
+	if switched {
+		n.ActiveModelRef = n.FallbackModel.Alias
+		n.Fallback = &domain.ModelFallback{From: n.Model.Alias, To: n.FallbackModel.Alias, Reason: f, SwitchedAt: now}
+	}
 	if err := e.save(ctx, r); err != nil {
 		return 0, err
+	}
+	if switched {
+		e.event(r, n, slog.LevelWarn, "node.model_fallback", "from_model_ref", n.Fallback.From, "to_model_ref", n.Fallback.To, "error_code", f.Code)
 	}
 	e.event(r, n, slog.LevelInfo, "node.retry_scheduled", "backoff_ms", delay.Milliseconds(), "next_attempt_at", next)
 	return delay, nil

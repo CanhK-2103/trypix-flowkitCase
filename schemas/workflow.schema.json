@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {"const": 1},
-    "nodes": {"type": "array", "minItems": 2, "maxItems": 50, "items": {"type": "object", "required": ["id", "kind"], "additionalProperties": false, "properties": {"id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}, "kind": {"enum": ["input", "llm", "image", "output"]}, "modelRef": {"type": "string"}, "params": {"type": "object"}, "promptTemplate": {"type": "string"}}}},
+    "nodes": {"type": "array", "minItems": 2, "maxItems": 50, "items": {"type": "object", "required": ["id", "kind"], "additionalProperties": false, "properties": {"id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}, "kind": {"enum": ["input", "llm", "image", "output"]}, "modelRef": {"type": "string"}, "fallbackModelRef": {"type": "string", "minLength": 1}, "params": {"type": "object"}, "promptTemplate": {"type": "string"}}}},
     "edges": {"type": "array", "maxItems": 100, "items": {"type": "object", "required": ["from", "fromPort", "to", "toPort"], "additionalProperties": false, "properties": {"from": {"type": "string"}, "fromPort": {"enum": ["text", "prompt", "image"]}, "to": {"type": "string"}, "toPort": {"enum": ["text", "prompt", "image"]}}}}
   }
 }

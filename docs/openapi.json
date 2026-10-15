@@ -1686,6 +1686,10 @@
                 "modelRef": {
                   "type": "string"
                 },
+                "fallbackModelRef": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "params": {
                   "type": "object"
                 },
@@ -2161,6 +2165,10 @@
               "modelRef": {
                 "type": "string"
               },
+              "fallbackModelRef": {
+                "type": "string",
+                "minLength": 1
+              },
               "params": {
                 "type": "object"
               },
@@ -2171,6 +2179,37 @@
           },
           "model_snapshot": {
             "$ref": "#/components/schemas/Model"
+          },
+          "fallback_model_snapshot": {
+            "$ref": "#/components/schemas/Model"
+          },
+          "active_model_ref": {
+            "type": "string"
+          },
+          "fallback": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "reason": {
+                "$ref": "#/components/schemas/Failure"
+              },
+              "switched_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "reason",
+              "switched_at"
+            ],
+            "additionalProperties": false
           },
           "status": {
             "type": "string"

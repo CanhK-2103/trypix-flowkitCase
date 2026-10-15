@@ -158,6 +158,9 @@ const schemas = {
     {
       node: graph.properties.nodes.items,
       model_snapshot: ref("Model"),
+      fallback_model_snapshot: ref("Model"),
+      active_model_ref: str,
+      fallback: object({ from: str, to: str, reason: ref("Failure"), switched_at: time }, ["from", "to", "reason", "switched_at"]),
       status: str,
       input: anyObject,
       output: anyObject,

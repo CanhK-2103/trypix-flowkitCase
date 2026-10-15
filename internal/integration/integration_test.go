@@ -329,6 +329,7 @@ type mockProvider struct {
 	hold                       bool
 	png                        []byte
 	models                     []string
+	failModels                 map[string]int
 	billingChecks              int
 	delayBilling               bool
 }
@@ -387,6 +388,12 @@ func (m *mockProvider) handler(w http.ResponseWriter, r *http.Request) {
 	default:
 		m.submitCount++
 		m.models = append(m.models, strings.TrimPrefix(r.URL.Path, "/"))
+		if m.failModels[strings.TrimPrefix(r.URL.Path, "/")] > 0 {
+			m.failModels[strings.TrimPrefix(r.URL.Path, "/")]--
+			w.WriteHeader(503)
+			_, _ = w.Write([]byte(`{"error_type":"runner_unavailable","detail":"mock primary unavailable"}`))
+			return
+		}
 		if m.failImage {
 			w.WriteHeader(422)
 			_, _ = w.Write([]byte(`{"error_type":"bad_request","detail":"mock invalid input"}`))

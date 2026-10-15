@@ -2,6 +2,7 @@ export type Node = {
   id: string;
   kind: string;
   modelRef?: string;
+  fallbackModelRef?: string;
   params?: Record<string, unknown>;
   promptTemplate?: string;
 };
@@ -60,6 +61,8 @@ export type Attempt = {
 };
 export type NodeRun = {
   node: Node;
+  active_model_ref?: string;
+  fallback?: { from: string; to: string; reason: Failure; switched_at: string };
   status: string;
   duration_ms: number;
   input?: unknown;
@@ -67,6 +70,8 @@ export type NodeRun = {
   rendered_prompt?: string;
   attempts: Attempt[];
   provider_requests: {
+    id?: string;
+    model_ref?: string;
     provider: string;
     actual_model_id?: string;
     requested_model_id: string;
