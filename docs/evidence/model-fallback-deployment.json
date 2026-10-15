@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-10-15T14:18:47.559562+00:00",
+  "site": "https://flowkit.canhurkurtoglu.com",
+  "source_commit": "9214d5f9d887995c91aad83c9c340d7a9519d86b",
+  "ci": "https://github.com/CanhK-2103/trypix-flowkitCase/actions/runs/38749874201",
+  "ci_jobs": {
+    "backend": "success",
+    "dashboard": "success",
+    "compose": "success"
+  },
+  "workflow_id": "10000000-0000-4000-8000-000000000002",
+  "workflow_revision": 4,
+  "node_id": "poster",
+  "primary_model_ref": "flux-krea",
+  "secondary_model_ref": "flux-dev",
+  "workflow_validation": {
+    "findings": [],
+    "valid": true
+  },
+  "dashboard_asset": "/assets/index-CQI_Mnqg.js",
+  "run_count_before": 6,
+  "run_count_after": 6,
+  "provider_request_count_before": 10,
+  "provider_request_count_after": 10,
+  "historical_run_data_unchanged": true,
+  "historical_artifacts_verified": true,
+  "active_runs": 0,
+  "active_jobs": 0,
+  "billing_enabled": false,
+  "ai_provider_calls": 0,
+  "generation_started": false,
+  "fallback_execution_verified": "local mock providers with isolated PostgreSQL; no live failover generation"
+}
